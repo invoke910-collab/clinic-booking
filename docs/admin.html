@@ -1,72 +1,128 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>預約後台</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>順立骨科診所預約後台</title>
 
-<style>
-body {
-    font-family: "Noto Sans TC";
-    background: #f0f6f4;
-}
-.container {
-    max-width: 900px;
-    margin: 20px auto;
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-}
-th {
-    background: #006b55;
-    color: white;
-}
-button {
-    padding: 8px 16px;
-    background: #008f6b;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    margin-right: 10px;
-}
-</style>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background: #f3f5f7;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 980px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+    }
+    h2 {
+      margin-top: 0;
+      color: #0b6b57;
+      text-align: center;
+    }
+    #loginBox {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    #loginBox input {
+      padding: 10px;
+      font-size: 16px;
+      width: 220px;
+      margin-right: 10px;
+    }
+    #loginBox button {
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background: #0b8c6b;
+      color: white;
+    }
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      background: #0b8c6b;
+      color: white;
+      margin-right: 6px;
+      margin-bottom: 10px;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    th {
+      background: #0b6b57;
+      color: white;
+    }
+    td button {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: none;
+      background: #d32f2f;
+      color: white;
+      font-size: 13px;
+    }
+  </style>
 </head>
 
 <body>
-<div class="container">
-    <h2>診所預約後台</h2>
+  <div class="container">
+    <h2>順立骨科診所預約後台</h2>
 
     <div id="loginBox">
-        <p>請輸入後台密碼：</p>
-        <input type="password" id="pwd" />
-        <button onclick="login()">登入</button>
-        <p id="msg" style="color:red;"></p>
+      <p>請輸入後台密碼：</p>
+      <input type="password" id="adminPwd" placeholder="請輸入密碼" />
+      <button onclick="checkLogin()">登入</button>
+      <p id="loginErr" style="color:#d32f2f; margin-top:10px;"></p>
     </div>
 
-    <div id="adminBox" style="display:none;">
-        <button onclick="exportExcel()">匯出 Excel</button>
+    <div id="adminPanel" style="display:none;">
+      <div style="margin-bottom:10px;">
+        <button class="btn" onclick="exportExcel()">匯出 Excel(CSV)</button>
+        <button class="btn" onclick="reloadData()">重新整理</button>
+      </div>
 
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>ID</th><th>姓名</th><th>電話</th><th>證件</th>
-                    <th>生日</th><th>日期</th><th>時段</th><th>醫師</th><th>刪除</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>姓名</th>
+              <th>電話</th>
+              <th>證件</th>
+              <th>生日</th>
+              <th>日期</th>
+              <th>時段</th>
+              <th>醫師</th>
+              <th>建立時間</th>
+              <th>刪除</th>
+            </tr>
+          </thead>
+          <tbody id="dataBody"></tbody>
         </table>
+      </div>
     </div>
-</div>
+  </div>
 
-<script src="admin.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>

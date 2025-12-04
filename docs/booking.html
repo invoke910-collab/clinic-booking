@@ -111,84 +111,76 @@
     <button onclick="submitBooking()">送出預約</button>
   </div>
 
-  <script>
-    //----------------------------
-    // 醫師班表（可每月更新）
-    //----------------------------
-    const schedule = {
-      1: { morning: "吳立偉院長 / 郭芷毓醫師", noon: "林峻豪副院長", night: "林峻豪副院長" },
-      2: { morning: "林峻豪副院長", noon: "郭芷毓醫師", night: "吳立偉院長 / 郭芷毓醫師" },
-      3: { morning: "吳立偉院長 / 郭芷毓醫師", noon: "黃前華副院長", night: "黃前華副院長" },
-      4: { morning: "吳立偉院長", noon: "林峻豪副院長", night: "林峻豪副院長" },
-      5: { morning: "林峻豪副院長", noon: "郭芷毓醫師", night: "郭芷毓醫師" },
-      6: { morning: "劉俊良醫師（輪值）", noon: "林峻豪副院長（輪值）", night: "—" },
-      0: { morning: "休診", noon: "休診", night: "休診" }
-    };
+<script>
+// 醫師排班表
+const schedule = {
+  1: { morning: ["吳立偉院長", "郭芷毓醫師"], noon: ["林峻豪副院長"], night: ["林峻豪副院長"] },
+  2: { morning: ["林峻豪副院長"], noon: ["郭芷毓醫師"], night: ["吳立偉院長", "郭芷毓醫師"] },
+  3: { morning: ["吳立偉院長", "郭芷毓醫師"], noon: ["黃前華副院長"], night: ["黃前華副院長"] },
+  4: { morning: ["吳立偉院長"], noon: ["林峻豪副院長"], night: ["林峻豪副院長"] },
+  5: { morning: ["林峻豪副院長"], noon: ["郭芷毓醫師"], night: ["郭芷毓醫師"] },
+  6: { morning: ["劉俊良醫師", "林峻豪副院長"], noon: ["劉俊良醫師", "林峻豪副院長"], night: [] },
+  0: { morning: [], noon: [], night: [] }
+};
 
-    //----------------------------
-    // 預設：今日不可預約 → 設定 min 日期
-    //----------------------------
-    const today = new Date();
-    today.setDate(today.getDate() + 1);
-    document.getElementById("date").min = today.toISOString().split("T")[0];
+// 顯示醫師資訊
+function updateDoctorInfo() {
+  const date = document.getElementById("date").value;
+  const section = document.getElementById("section").value;
+  if (!date || !section) return;
 
-    //----------------------------
-    // 選日期 → 顯示值班醫師
-    //----------------------------
-    document.getElementById("date").addEventListener("change", updateDoctor);
-    document.getElementById("section").addEventListener("change", updateDoctor);
+  const weekday = new Date(date).getDay();
+  const doctors = schedule[weekday][section];
 
-    function updateDoctor() {
-      const date = document.getElementById("date").value;
-      const section = document.getElementById("section").value;
+  const doctorDiv = document.getElementById("doctorArea");
+  const doctorSelect = document.getElementById("doctor");
 
-      if (!date || !section) {
-        document.getElementById("doctorDisplay").style.display = "none";
-        return;
-      }
+  doctorSelect.innerHTML = "";
 
-      const d = new Date(date);
-      const weekday = d.getDay();
-      const doctor = schedule[weekday][section];
+  if (doctors.length === 0) {
+    doctorDiv.innerHTML = `<span style="color:red;">此時段無門診</span>`;
+    return;
+  }
 
-      document.getElementById("doctorDisplay").innerHTML =
-        `當日門診醫師：${doctor}`;
-      document.getElementById("doctorDisplay").style.display = "block";
-    }
+  doctorDiv.innerHTML = doctors.length > 1
+    ? "請選擇醫師："
+    : `當日門診醫師：${doctors[0]}`;
 
-    //----------------------------
-    // 送出預約
-    //----------------------------
-    async function submitBooking() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const idno = document.getElementById("idno").value.trim();
-      const birthday = document.getElementById("birthday").value;
-      const date = document.getElementById("date").value;
-      const section = document.getElementById("section").value;
+  doctors.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d;
+    opt.textContent = d;
+    doctorSelect.appendChild(opt);
+  });
+}
 
-      if (!name || !phone || !idno || !birthday || !date || !section) {
-        document.getElementById("error").innerHTML = "請完整填寫所有欄位！";
-        return;
-      }
+// 送出預約
+async function submitBooking() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const idno = document.getElementById("idno").value.trim();
+  const birthday = document.getElementById("birthday").value.trim();
+  const date = document.getElementById("date").value.trim();
+  const section = document.getElementById("section").value;
+  const doctor = document.getElementById("doctor").value;
 
-      document.getElementById("error").innerHTML = "";
+  if (!name || !phone || !idno || !birthday || !date || !section || !doctor) {
+    alert("請填寫所有必填欄位！");
+    return;
+  }
 
-      const response = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, idno, birthday, date, section })
-      });
+  const res = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, phone, idno, birthday, date, section, doctor })
+  });
 
-      const data = await response.json();
+  const data = await res.json();
 
-      if (data.error) {
-        document.getElementById("error").innerHTML = data.error;
-        return;
-      }
+  if (data.error) alert(data.error);
+  else alert(data.message);
+}
+</script>
 
-      alert(`✔ 預約成功！\n\n姓名：${name}\n日期：${date}\n時段：${section}\n預約編號：${data.booking_id}`);
-    }
-  </script>
 </body>
 </html>

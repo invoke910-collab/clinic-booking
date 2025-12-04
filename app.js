@@ -7,35 +7,31 @@
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ===============================
-//  連線 SQLite（自動重建資料庫）
-// ===============================
+// SQLite DB 連線
 const db = new sqlite3.Database("./clinic.db", (err) => {
-  if (err) console.error("資料庫連線錯誤：", err.message);
+  if (err) console.error(err.message);
   else console.log("已連線 SQLite 資料庫 clinic.db");
 });
 
-// ===============================
-//  建立新版 table（自動建立，不重覆）
-// ===============================
+// 建立資料表
 db.run(`
   CREATE TABLE IF NOT EXISTS appointments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
-      idNumber TEXT NOT NULL,
+      id_number TEXT NOT NULL,
       birthday TEXT NOT NULL,
       date TEXT NOT NULL,
-      section TEXT NOT NULL,
+      time TEXT NOT NULL,
       doctor TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
 
 // ===============================
 //  🔥 預約 API（新版）

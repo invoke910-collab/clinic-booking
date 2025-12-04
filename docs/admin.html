@@ -1,125 +1,146 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>順立骨科診所預約後台</title>
-
   <style>
     body {
-      font-family: "Noto Sans TC", sans-serif;
-      background: #f3f5f7;
       margin: 0;
-      padding: 0;
+      padding: 12px;
+      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", system-ui, sans-serif;
+      background: #eceff1;
     }
+
     .container {
-      max-width: 980px;
-      margin: 20px auto;
+      max-width: 960px;
+      margin: 0 auto 40px;
       background: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+      padding: 18px 16px 22px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
       box-sizing: border-box;
     }
-    h2 {
-      margin-top: 0;
-      color: #0b6b57;
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      color: #263238;
       text-align: center;
     }
-    #loginBox {
+
+    .login-box {
+      max-width: 360px;
+      margin: 80px auto;
+      background: #ffffff;
+      padding: 22px 18px 18px;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       text-align: center;
-      padding: 40px 20px;
     }
-    #loginBox input {
-      padding: 10px;
-      font-size: 16px;
-      width: 220px;
-      margin-right: 10px;
+
+    .login-box input {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid #cfd8dc;
+      font-size: 15px;
+      box-sizing: border-box;
     }
-    #loginBox button {
-      padding: 10px 18px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      background: #0b8c6b;
-      color: white;
-    }
+
     .btn {
-      padding: 8px 14px;
-      border-radius: 6px;
       border: none;
-      background: #0b8c6b;
-      color: white;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #fff;
+      background: #00897b;
       margin-right: 6px;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
-    .table-wrapper {
-      overflow-x: auto;
-      margin-top: 10px;
+
+    .btn.danger {
+      background: #e53935;
     }
+
+    .btn.secondary {
+      background: #546e7a;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 700px;
-    }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-    th {
-      background: #0b6b57;
-      color: white;
-    }
-    td button {
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: none;
-      background: #d32f2f;
-      color: white;
+      margin-top: 10px;
       font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 6px 4px;
+      text-align: center;
+    }
+
+    th {
+      background: #eceff1;
+    }
+
+    .toolbar {
+      margin-top: 6px;
+      margin-bottom: 6px;
+      text-align: right;
+    }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 12px;
+      }
+      th,
+      td {
+        padding: 4px 2px;
+      }
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <h2>順立骨科診所預約後台</h2>
+  <!-- 密碼登入 -->
+  <div id="loginBox" class="login-box">
+    <h2 style="margin-top:0;">預約後台登入</h2>
+    <p style="font-size:14px;color:#607d8b;">請輸入後台密碼</p>
+    <input type="password" id="adminPwd" placeholder="請輸入密碼" />
+    <br /><br />
+    <button class="btn" onclick="checkPassword()">登入</button>
+  </div>
 
-    <div id="loginBox">
-      <p>請輸入後台密碼：</p>
-      <input type="password" id="adminPwd" placeholder="請輸入密碼" />
-      <button onclick="checkLogin()">登入</button>
-      <p id="loginErr" style="color:#d32f2f; margin-top:10px;"></p>
+  <!-- 後台主畫面 -->
+  <div id="adminPanel" class="container" style="display:none;">
+    <h1>順立骨科診所預約後台</h1>
+
+    <div class="toolbar">
+      <button class="btn secondary" onclick="refreshData()">重新整理</button>
+      <button class="btn" onclick="exportCSV()">匯出 Excel（CSV）</button>
     </div>
 
-    <div id="adminPanel" style="display:none;">
-      <div style="margin-bottom:10px;">
-        <button class="btn" onclick="exportExcel()">匯出 Excel(CSV)</button>
-        <button class="btn" onclick="reloadData()">重新整理</button>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>姓名</th>
-              <th>電話</th>
-              <th>證件</th>
-              <th>生日</th>
-              <th>日期</th>
-              <th>時段</th>
-              <th>醫師</th>
-              <th>建立時間</th>
-              <th>刪除</th>
-            </tr>
-          </thead>
-          <tbody id="dataBody"></tbody>
-        </table>
-      </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>姓名</th>
+            <th>電話</th>
+            <th>證件號碼</th>
+            <th>生日</th>
+            <th>預約日期</th>
+            <th>時段</th>
+            <th>醫師</th>
+            <th>建立時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="adminBody"></tbody>
+      </table>
     </div>
   </div>
 

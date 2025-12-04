@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>預約管理後台</title>
+<style>
+  body {
+    font-family: "微軟正黑體";
+    background: #f4f6f8;
+    padding: 20px;
+  }
+  h2 {
+    color: #0c8a6a;
+    margin-bottom: 10px;
+  }
+  .filter {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  input, button {
+    padding: 8px;
+    font-size: 14px;
+  }
+  button {
+    background: #0c8a6a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    text-align: center;
+  }
+  th {
+    background: #e2f0ec;
+    font-weight: bold;
+  }
+  tr:nth-child(even) td {
+    background: #fafafa;
+  }
+  .small {
+    font-size: 11px;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+<h2>預約管理後台</h2>
+<div class="filter">
+  <div>
+    <label>日期篩選：</label>
+    <input type="date" id="filterDate">
+  </div>
+  <div>
+    <button onclick="loadData()">查詢</button>
+    <button onclick="clearFilter()">清除日期</button>
+  </div>
+</div>
+<div class="small" id="summary"></div>
+<table>
+  <thead>
+    <tr>
+      <th>編號</th>
+      <th>建立時間</th>
+      <th>日期</th>
+      <th>時段</th>
+      <th>醫師</th>
+      <th>姓名</th>
+      <th>電話</th>
+      <th>身分證/護照</th>
+      <th>生日</th>
+    </tr>
+  </thead>
+  <tbody id="tbody">
+  </tbody>
+</table>
+
+<script>
+  const API_BASE = "https://clinic-booking-yb4u.onrender.com";
+
+  function sectionLabel(section) {
+    if (section === "morning") return "早診（08:00–12:00）";
+    if (section === "afternoon") return "午診（14:30–18:30）";
+    if (section === "evening") return "晚診（18:30–20:00）";
+    return section;
+  }
+
+  function maskId(id) {
+    if (!id || id.length < 4) return "***";
+    if (id.length <= 7) return id[0] + "***" + id.slice(-2);
+    const head = id.slice(0, 4);
+    const tail = id.slice(-3);
+    const stars = "*".repeat(id.length - 7);
+    return head + stars + tail;
+  }
+
+  async function loadData() {
+    const date = document.getElementById("filterDate").value;
+    let url = API_BASE + "/appointments";
+    if (date) url += "?date=" + encodeURIComponent(date);
+
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "<tr><td colspan='9'>讀取中...</td></tr>";
+    document.getElementById("summary").textContent = "";
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        tbody.innerHTML = "<tr><td colspan='9'>資料格式錯誤</td></tr>";
+        return;
+      }
+      if (data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='9'>目前無預約資料</td></tr>";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.id}</td>
+          <td>${row.created_at || ""}</td>
+          <td>${row.date}</td>
+          <td>${sectionLabel(row.section)}</td>
+          <td>${row.doctor}</td>
+          <td>${row.name}</td>
+          <td>${row.phone}</td>
+          <td>${maskId(row.id_number)}</td>
+          <td>${row.birth}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("summary").textContent =
+        `共 ${data.length} 筆預約資料` + (date ? `（日期：${date}）` : "");
+
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = "<tr><td colspan='9'>讀取失敗，請稍後重試</td></tr>";
+    }
+  }
+
+  function clearFilter() {
+    document.getElementById("filterDate").value = "";
+    loadData();
+  }
+
+  // 預設載入全部
+  loadData();
+</script>
+</body>
+</html>

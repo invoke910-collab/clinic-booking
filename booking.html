@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>診所線上預約</title>
+
+<style>
+    body {
+        background: #eef5f3;
+        font-family: "微軟正黑體";
+        display: flex;
+        justify-content: center;
+        padding: 30px;
+    }
+
+    .container {
+        width: 360px;
+        background: #fff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-sizing: border-box;
+    }
+
+    h2 {
+        text-align: center;
+        color: #0c8a6a;
+        margin-bottom: 25px;
+        font-weight: bold;
+    }
+
+    .input-block {
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 6px;
+        color: #0c8a6a;
+        font-weight: bold;
+        font-size: 15px;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    button {
+        width: 100%;
+        padding: 14px;
+        background: #0c8a6a;
+        color: #fff;
+        font-size: 18px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    pre {
+        font-size: 13px;
+    }
+
+    /* --- Modal 彈跳視窗 --- */
+    .modal {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-box {
+        background: white;
+        padding: 25px;
+        width: 300px;
+        border-radius: 12px;
+        text-align: center;
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ok-btn {
+        width: 100%;
+        margin-top: 20px;
+        padding: 10px;
+        background: #0c8a6a;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>診所線上預約</h2>
+
+    <div class="input-block">
+        <label>姓名：</label>
+        <input type="text" id="name" placeholder="請輸入姓名">
+    </div>
+
+    <div class="input-block">
+        <label>電話：</label>
+        <input type="text" id="phone" placeholder="請輸入電話">
+    </div>
+
+    <div class="input-block">
+        <label>預約日期：</label>
+        <input type="date" id="date">
+    </div>
+
+    <div class="input-block">
+        <label>預約時段：</label>
+        <select id="section">
+            <option value="">請選擇時段</option>
+            <option value="morning">早診（09:00）</option>
+            <option value="noon">午診（13:30）</option>
+            <option value="night">晚診（18:00）</option>
+        </select>
+    </div>
+
+    <button onclick="submitBooking()">送出預約</button>
+
+    <pre id="result"></pre>
+</div>
+
+<!-- Modal 彈跳視窗 -->
+<div id="modal" class="modal">
+    <div class="modal-box">
+        <h3 id="modal-title">✔ 預約成功！</h3>
+        <p id="modal-body"></p>
+        <button class="ok-btn" onclick="closeModal()">確認</button>
+    </div>
+</div>
+
+<script>
+    // 日期只能選明天以後
+    let today = new Date();
+    today.setDate(today.getDate() + 1);
+    document.getElementById("date").min = today.toISOString().split("T")[0];
+
+    function sectionToTime(section) {
+        if (section === "morning") return "09:00";
+        if (section === "noon") return "13:30";
+        if (section === "night") return "18:00";
+        return "";
+    }
+
+    function sectionLabel(section) {
+        if (section === "morning") return "早診";
+        if (section === "noon") return "午診";
+        if (section === "night") return "晚診";
+        return "";
+    }
+
+    async function submitBooking() {
+        const name = document.getElementById("name").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const date = document.getElementById("date").value;
+        const section = document.getElementById("section").value;
+
+        if (!name || !phone || !date || !section) {
+            alert("請完整填寫所有欄位！");
+            return;
+        }
+
+        const time = sectionToTime(section);
+
+        const res = await fetch("http://localhost:5000/booking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, phone, date, time })
+        });
+
+        const data = await res.json();
+
+        if (data.message === "預約成功！") {
+            document.getElementById("modal-body").innerHTML =
+                `${name}，您的預約已完成！<br>時間：${date} ${sectionLabel(section)}<br>預約編號：${data.booking_id}`;
+            document.getElementById("modal").style.display = "flex";
+
+            // 清空
+            document.getElementById("name").value = "";
+            document.getElementById("phone").value = "";
+            document.getElementById("date").value = "";
+            document.getElementById("section").value = "";
+        } else {
+            alert(data.message);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById("modal").style.display = "none";
+    }
+</script>
+
+</body>
+</html>

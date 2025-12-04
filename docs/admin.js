@@ -124,6 +124,7 @@ function exportCSV() {
 
   const all = [header, ...rows];
 
+  // **避免亂碼：所有欄位強制以 UTF-8 BOM & CSV-safe 格式輸出**
   const csv = all
     .map((row) =>
       row
@@ -135,7 +136,11 @@ function exportCSV() {
     )
     .join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+  // 👇🏻 這裡重點來了：type 明確設定；UTF-8 + BOM
+  const blob = new Blob(["\ufeff" + csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -145,3 +150,4 @@ function exportCSV() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+

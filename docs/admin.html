@@ -2,226 +2,167 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>線上預約後台管理</title>
+<title>預約後台管理</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
-  font-family: "Microsoft JhengHei", sans-serif;
-  background: #e8f5f3;
-  margin: 0;
+    font-family: "Noto Sans TC", sans-serif;
+    background: #eef7f5;
+    margin: 0;
 }
-.wrapper {
-  max-width: 900px;
-  margin: 20px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.header {
+    background: #0b7b62;
+    color: white;
+    padding: 16px;
+    font-size: 22px;
+    text-align: center;
 }
-h2 { margin-top: 0; color:#0d7a63; }
-label { margin-right: 8px; }
-input, select {
-  padding: 6px 8px;
-  margin: 4px;
+.container {
+    max-width: 900px;
+    margin: 25px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-button {
-  padding: 6px 12px;
-  margin: 4px;
-  background: #0d7a63;
-  border: none;
-  color: #fff;
-  border-radius: 4px;
+input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 20px;
 }
-button.danger { background: #c62828; }
-
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  font-size: 14px;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
 }
 th, td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
 }
-th { background: #f0f0f0; }
-#loginPane {
-  max-width: 360px;
-  margin: 80px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+th {
+    background: #f3f3f3;
+}
+button {
+    background: #d9534f;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover {
+    background: #b52b27;
+}
+.no-data {
+    text-align: center;
+    color: #777;
+    padding: 20px;
 }
 </style>
 </head>
+
 <body>
 
-<div id="loginPane">
-  <h2>後台登入</h2>
-  <p>請輸入管理密碼：</p>
-  <input type="password" id="loginPassword" placeholder="密碼">
-  <br>
-  <button onclick="login()">登入</button>
-  <p id="loginMsg" style="color:red;"></p>
-</div>
+<div class="header">預約後台管理系統</div>
 
-<div id="mainPane" style="display:none;">
-  <div class="wrapper">
-    <h2>線上預約後台管理</h2>
+<div class="container">
 
-    <div>
-      <label>關鍵字：</label>
-      <input id="qKeyword" placeholder="姓名 / 電話 / 身分證">
-      <label>日期：</label>
-      <input type="date" id="qDate">
-      <label>醫師：</label>
-      <input id="qDoctor" placeholder="例如 吳立偉院長">
-      <button onclick="loadData()">搜尋 / 重新整理</button>
-      <button onclick="exportCSV()">匯出 CSV</button>
-    </div>
+    <label>搜尋（姓名 / 電話 / 日期 / 醫師）：</label>
+    <input id="search" placeholder="輸入關鍵字即可搜尋…">
 
     <table>
-      <thead>
-        <tr>
-          <th>編號</th>
-          <th>姓名</th>
-          <th>電話</th>
-          <th>身分證/護照</th>
-          <th>生日</th>
-          <th>日期</th>
-          <th>診別</th>
-          <th>醫師</th>
-          <th>建立時間</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="tbBody"></tbody>
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>證件號碼</th>
+                <th>生日</th>
+                <th>日期</th>
+                <th>時段</th>
+                <th>醫師</th>
+                <th>建立時間</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="list"></tbody>
     </table>
-  </div>
+
+    <div class="no-data" id="nodata" style="display:none;">無資料</div>
+
 </div>
 
 <script>
-const API_BASE = "https://clinic-booking-yb4u.onrender.com";
-let adminPassword = "";
+// 後端 API URL（Render）
+const API = "https://clinic-booking-yb4u.onrender.com";
 
-// 登入
-async function login() {
-  const pw = document.getElementById("loginPassword").value.trim();
-  if (!pw) return;
+// ===== 取得預約列表 =====
+async function loadBookings() {
+    const res = await fetch(`${API}/admin/all`);
+    const data = await res.json();
 
-  const res = await fetch(API_BASE + "/admin/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password: pw })
-  });
+    const list = document.getElementById("list");
+    const nodata = document.getElementById("nodata");
 
-  const data = await res.json();
-  if (res.ok && data.ok) {
-    adminPassword = pw;
-    document.getElementById("loginPane").style.display = "none";
-    document.getElementById("mainPane").style.display = "block";
-    loadData();
-  } else {
-    document.getElementById("loginMsg").textContent = data.error || "登入失敗";
-  }
+    list.innerHTML = "";
+
+    if (!data.length) {
+        nodata.style.display = "block";
+        return;
+    }
+    nodata.style.display = "none";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.name}</td>
+            <td>${row.phone}</td>
+            <td>${row.pid}</td>
+            <td>${row.birth}</td>
+            <td>${row.date}</td>
+            <td>${convertTime(row.time)}</td>
+            <td>${row.doctor}</td>
+            <td>${row.created_at}</td>
+            <td><button onclick="deleteBooking(${row.id})">刪除</button></td>
+        `;
+        list.appendChild(tr);
+    });
 }
 
-// 載入資料
-async function loadData() {
-  const keyword = document.getElementById("qKeyword").value.trim();
-  const date = document.getElementById("qDate").value.trim();
-  const doctor = document.getElementById("qDoctor").value.trim();
-
-  const params = new URLSearchParams();
-  if (keyword) params.append("keyword", keyword);
-  if (date) params.append("date", date);
-  if (doctor) params.append("doctor", doctor);
-
-  const res = await fetch(API_BASE + "/admin/appointments?" + params.toString(), {
-    headers: { "x-admin-password": adminPassword }
-  });
-  const data = await res.json();
-  renderTable(data);
+// 時段顯示中文
+function convertTime(t) {
+    if (t === "morning") return "早診";
+    if (t === "afternoon") return "午診";
+    if (t === "evening") return "晚診";
+    return t;
 }
 
-function renderTable(rows) {
-  const tbody = document.getElementById("tbBody");
-  tbody.innerHTML = "";
-  if (!rows || !rows.length) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 10;
-    td.textContent = "目前沒有符合條件的預約";
-    tr.appendChild(td);
-    tbody.appendChild(tr);
-    return;
-  }
+// ===== 刪除預約 =====
+async function deleteBooking(id) {
+    if (!confirm("確定要刪除此筆預約嗎？")) return;
 
-  rows.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.id}</td>
-      <td>${r.name}</td>
-      <td>${r.phone}</td>
-      <td>${r.idno}</td>
-      <td>${r.birthday}</td>
-      <td>${r.date}</td>
-      <td>${r.section}</td>
-      <td>${r.doctor}</td>
-      <td>${r.created_at || ""}</td>
-      <td>
-        <button class="danger" onclick="del(${r.id})">刪除</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+    await fetch(`${API}/admin/delete/${id}`, { method: "DELETE" });
+
+    alert("已刪除！");
+    loadBookings();
 }
 
-// 刪除
-async function del(id) {
-  if (!confirm("確定要刪除編號 " + id + " 的預約嗎？")) return;
+// ===== 搜尋 =====
+document.getElementById("search").addEventListener("input", function () {
+    const keyword = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#list tr");
 
-  const res = await fetch(API_BASE + "/admin/appointments/" + id, {
-    method: "DELETE",
-    headers: { "x-admin-password": adminPassword }
-  });
-  const data = await res.json();
-  if (res.ok && data.ok) {
-    loadData();
-  } else {
-    alert(data.error || "刪除失敗");
-  }
-}
+    rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        r.style.display = text.includes(keyword) ? "" : "none";
+    });
+});
 
-// 匯出 CSV
-async function exportCSV() {
-  const keyword = document.getElementById("qKeyword").value.trim();
-  const date = document.getElementById("qDate").value.trim();
-  const doctor = document.getElementById("qDoctor").value.trim();
-
-  const params = new URLSearchParams();
-  if (keyword) params.append("keyword", keyword);
-  if (date) params.append("date", date);
-  if (doctor) params.append("doctor", doctor);
-
-  const res = await fetch(API_BASE + "/admin/export?" + params.toString(), {
-    headers: { "x-admin-password": adminPassword }
-  });
-  const csv = await res.text();
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "appointments.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+loadBookings();
 </script>
+
 </body>
 </html>

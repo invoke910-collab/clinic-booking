@@ -1,147 +1,66 @@
-// ================================
-//  booking.js（完整修正版）
-// ================================
-
-const API = "https://clinic-booking-yb4u.onrender.com/booking";
-
-// 正確週六輪值表
-const saturdayDoctors = {
-    "2025-12-06": "劉俊良醫師",
-    "2025-12-13": "林峻豪副院長",
-    "2025-12-20": "劉俊良醫師",
-    "2025-12-27": "林峻豪副院長"
-};
-
-// 特殊日期：無晚診（例如 12/25）
-const noNightDates = ["2025-12-25"];
-
-// 預設不選今天以前
-window.onload = () => {
-    const today = new Date();
-    today.setDate(today.getDate() + 1);
-
-    let yyyy = today.getFullYear();
-    let mm = String(today.getMonth() + 1).padStart(2, '0');
-    let dd = String(today.getDate()).padStart(2, '0');
-
-    document.getElementById("date").setAttribute("min", `${yyyy}-${mm}-${dd}`);
-};
-
-document.getElementById("date").addEventListener("change", updateDoctor);
-document.getElementById("time").addEventListener("change", updateDoctor);
-
-function updateDoctor() {
-    const date = document.getElementById("date").value;
-    let timeSel = document.getElementById("time");
-    const doctorSel = document.getElementById("doctor");
-    const todayBox = document.getElementById("todayDoctor");
-
-    doctorSel.innerHTML = `<option value="">請先選擇時段</option>`;
-    todayBox.innerHTML = "";
-
-    if (!date) return;
-
-    const day = new Date(date).getDay();
-
-    // ↓↓↓ 禁止晚診（週六 & 特定日期）
-    if (day === 6 || noNightDates.includes(date)) {
-        // 移除晚診
-        [...timeSel.options].forEach(opt => {
-            if (opt.value === "night") opt.style.display = "none";
-        });
-    } else {
-        // 顯示晚診
-        [...timeSel.options].forEach(opt => opt.style.display = "block");
+{
+  "weekly": {
+    "1": {
+      "morning": ["吳立偉院長", "郭芷毓醫師"],
+      "afternoon": ["林峻豪副院長"],
+      "night": ["林峻豪副院長"]
+    },
+    "2": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["郭芷毓醫師"],
+      "night": ["吳立偉院長", "郭芷毓醫師"]
+    },
+    "3": {
+      "morning": ["吳立偉院長", "郭芷毓醫師"],
+      "afternoon": ["黃俞華副院長"],
+      "night": ["黃俞華副院長"]
+    },
+    "4": {
+      "morning": ["吳立偉院長"],
+      "afternoon": ["林峻豪副院長"],
+      "night": ["林峻豪副院長"]
+    },
+    "5": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["郭芷毓醫師"],
+      "night": ["郭芷毓醫師"]
+    },
+    "6": {
+      "morning": "週六特別班表（依日期）",
+      "afternoon": "週六特別班表（依日期）",
+      "night": []
+    },
+    "0": {
+      "morning": [],
+      "afternoon": [],
+      "night": []
     }
+  },
 
-    const time = timeSel.value;
-    if (!time) return;
-
-    let doctor = "";
-
-    if (day === 6) {
-        doctor = saturdayDoctors[date] || "輪值資訊未設定";
-    } else if (day === 1) {
-        if (time === "morning") doctor = "吳立偉院長 ＆ 郭芷毓醫師";
-        if (time === "afternoon") doctor = "林峻豪副院長";
-        if (time === "night") doctor = "林峻豪副院長";
-    } else if (day === 2) {
-        if (time === "morning") doctor = "林峻豪副院長";
-        if (time === "afternoon") doctor = "郭芷毓醫師";
-        if (time === "night") doctor = "吳立偉院長 ＆ 郭芷毓醫師";
-    } else if (day === 3) {
-        if (time === "morning") doctor = "吳立偉院長 ＆ 郭芷毓醫師";
-        if (time === "afternoon") doctor = "黃俞華副院長";
-        if (time === "night") doctor = "黃俞華副院長";
-    } else if (day === 4) {
-        if (time === "morning") doctor = "吳立偉院長";
-        if (time === "afternoon") doctor = "林峻豪副院長";
-        if (time === "night") doctor = "林峻豪副院長";
-    } else if (day === 5) {
-        if (time === "morning") doctor = "林峻豪副院長";
-        if (time === "afternoon") doctor = "郭芷毓醫師";
-        if (time === "night") doctor = "郭芷毓醫師";
+  "special_saturday": {
+    "2025-12-06": {
+      "morning": ["劉俊良醫師"],
+      "afternoon": ["劉俊良醫師"]
+    },
+    "2025-12-13": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["林峻豪副院長"]
+    },
+    "2025-12-20": {
+      "morning": ["劉俊良醫師"],
+      "afternoon": ["劉俊良醫師"]
+    },
+    "2025-12-27": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["林峻豪副院長"]
     }
+  },
 
-    if (doctor) {
-        doctorSel.innerHTML = `<option value="${doctor}">${doctor}</option>`;
-        todayBox.innerHTML = `本日門診醫師：${doctor}`;
-    }
-}
-
-// =========================
-// 送出預約
-// =========================
-async function submitBooking() {
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const id_number = document.getElementById("id_number").value.trim();
-    const birthday = document.getElementById("birthday").value;
-    const date = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
-    const doctor = document.getElementById("doctor").value;
-
-    if (!name || !phone || !id_number || !birthday || !date || !time || !doctor) {
-        document.getElementById("err").innerText = "所有欄位皆為必填";
-        return;
-    }
-
-    const res = await fetch(API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, id_number, birthday, date, time, doctor })
-    });
-
-    const result = await res.json();
-
-    if (result.error) {
-        document.getElementById("err").innerText = result.error;
-        return;
-    }
-
-    popupShow(name, date, time, doctor);
-}
-
-// =========================
-// popup
-// =========================
-function popupShow(name, date, time, doctor) {
-    const t = 
-        time === "morning" ? "早診（08:00–12:00）" :
-        time === "afternoon" ? "午診（14:30–18:00）" :
-        "晚診（18:30–20:00）";
-
-    document.getElementById("popupContent").innerHTML = `
-        姓名：${name}<br>
-        日期：${date}<br>
-        時段：${t}<br>
-        醫師：${doctor}
-    `;
-
-    document.getElementById("popupBox").style.display = "flex";
-}
-
-function closePopup() {
-    document.getElementById("popupBox").style.display = "none";
-    location.reload();
+  "no_night_dates": [
+    "2025-12-06",
+    "2025-12-13",
+    "2025-12-20",
+    "2025-12-27",
+    "2025-12-25"
+  ]
 }

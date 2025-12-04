@@ -1,168 +1,86 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>預約後台管理</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>預約後台管理</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<style>
-body {
-    font-family: "Noto Sans TC", sans-serif;
-    background: #eef7f5;
-    margin: 0;
-}
-.header {
-    background: #0b7b62;
-    color: white;
-    padding: 16px;
-    font-size: 22px;
-    text-align: center;
-}
-.container {
-    max-width: 900px;
-    margin: 25px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 20px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-th, td {
-    border-bottom: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
-}
-th {
-    background: #f3f3f3;
-}
-button {
-    background: #d9534f;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-button:hover {
-    background: #b52b27;
-}
-.no-data {
-    text-align: center;
-    color: #777;
-    padding: 20px;
-}
-</style>
+  <style>
+    body {
+      background: #f4f4f4;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .login-box, .admin-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #e6f5f3;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="header">預約後台管理系統</div>
+<div id="login" class="login-box">
+  <h2>後台登入</h2>
+  <input id="password" type="password" placeholder="請輸入密碼">
+  <button onclick="login()">登入</button>
+  <p id="loginMsg" style="color:red;"></p>
+</div>
 
-<div class="container">
+<div id="admin" class="admin-box" style="display:none;">
+  <h2>預約管理後台</h2>
 
-    <label>搜尋（姓名 / 電話 / 日期 / 醫師）：</label>
-    <input id="search" placeholder="輸入關鍵字即可搜尋…">
+  <button onclick="exportExcel()">下載 Excel</button>
 
-    <table>
-        <thead>
-            <tr>
-                <th>姓名</th>
-                <th>電話</th>
-                <th>證件號碼</th>
-                <th>生日</th>
-                <th>日期</th>
-                <th>時段</th>
-                <th>醫師</th>
-                <th>建立時間</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody id="list"></tbody>
-    </table>
-
-    <div class="no-data" id="nodata" style="display:none;">無資料</div>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>姓名</th>
+        <th>電話</th>
+        <th>身分證/護照</th>
+        <th>生日</th>
+        <th>日期</th>
+        <th>時段</th>
+        <th>醫師</th>
+        <th>建立時間</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
 </div>
 
-<script>
-// 後端 API URL（Render）
-const API = "https://clinic-booking-yb4u.onrender.com";
-
-// ===== 取得預約列表 =====
-async function loadBookings() {
-    const res = await fetch(`${API}/admin/all`);
-    const data = await res.json();
-
-    const list = document.getElementById("list");
-    const nodata = document.getElementById("nodata");
-
-    list.innerHTML = "";
-
-    if (!data.length) {
-        nodata.style.display = "block";
-        return;
-    }
-    nodata.style.display = "none";
-
-    data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${row.name}</td>
-            <td>${row.phone}</td>
-            <td>${row.pid}</td>
-            <td>${row.birth}</td>
-            <td>${row.date}</td>
-            <td>${convertTime(row.time)}</td>
-            <td>${row.doctor}</td>
-            <td>${row.created_at}</td>
-            <td><button onclick="deleteBooking(${row.id})">刪除</button></td>
-        `;
-        list.appendChild(tr);
-    });
-}
-
-// 時段顯示中文
-function convertTime(t) {
-    if (t === "morning") return "早診";
-    if (t === "afternoon") return "午診";
-    if (t === "evening") return "晚診";
-    return t;
-}
-
-// ===== 刪除預約 =====
-async function deleteBooking(id) {
-    if (!confirm("確定要刪除此筆預約嗎？")) return;
-
-    await fetch(`${API}/admin/delete/${id}`, { method: "DELETE" });
-
-    alert("已刪除！");
-    loadBookings();
-}
-
-// ===== 搜尋 =====
-document.getElementById("search").addEventListener("input", function () {
-    const keyword = this.value.toLowerCase();
-    const rows = document.querySelectorAll("#list tr");
-
-    rows.forEach(r => {
-        const text = r.innerText.toLowerCase();
-        r.style.display = text.includes(keyword) ? "" : "none";
-    });
-});
-
-loadBookings();
-</script>
+<script src="admin.js"></script>
 
 </body>
 </html>

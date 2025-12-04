@@ -161,13 +161,25 @@ async function submitBooking() {
     }
 
     // 成功提示（簡單版）
-    alert(
-      `預約成功！\n\n` +
-      `姓名：${name}\n` +
-      `日期：${date}\n` +
-      `時段：${time}\n` +
-      `醫師：${doctor}`
-    );
+   // 轉換中文時段
+let timeText = "";
+if (time === "morning") timeText = "早診（08:00–12:00）";
+if (time === "afternoon") timeText = "午診（14:30–18:00）";
+if (time === "night") timeText = "晚診（18:30–20:00）";
+
+// 排版 popup 內容
+const popupHTML = `
+  <strong>姓名：</strong>${name}<br>
+  <strong>日期：</strong>${date}<br>
+  <strong>時段：</strong>${timeText}<br>
+  <strong>醫師：</strong>${doctor}
+`;
+
+document.getElementById("popupDetails").innerHTML = popupHTML;
+
+// 顯示 popup
+document.getElementById("successPopup").style.display = "flex";
+
 
     // 清空表單
     document.getElementById("name").value = "";

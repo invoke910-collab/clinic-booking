@@ -36,6 +36,14 @@ db.run(`
 // ===============================
 //  🔥 預約 API（新版）
 // ===============================
+// 後台取得全部預約資料
+app.get("/admin-data", (req, res) => {
+  db.all("SELECT * FROM appointments ORDER BY created_at DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
 app.post("/booking", (req, res) => {
   const { name, phone, idNumber, birthday, date, section, doctor } = req.body;
 

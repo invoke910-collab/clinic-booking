@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>診所線上預約</title>
 
-    <!-- 字體＋基本設計 -->
     <style>
         body {
             font-family: "Noto Sans TC", sans-serif;
@@ -13,100 +12,99 @@
             margin: 0;
             padding: 0;
         }
+
         .container {
             max-width: 420px;
             margin: 20px auto;
             background: white;
             padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
         }
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #0a775f;
-        }
+
         label {
-            font-size: 15px;
             font-weight: bold;
-            color: #0a775f;
+            color: #005f4e;
         }
+
         input, select {
             width: 100%;
             padding: 12px;
-            margin: 8px 0 18px 0;
-            border-radius: 8px;
-            border: 1px solid #aaa;
-            font-size: 15px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
         }
-        .summary-box {
-            background: #eefaf6;
-            padding: 10px;
-            border-radius: 8px;
-            color: #0a775f;
-            font-size: 14px;
-        }
+
         button {
             width: 100%;
             padding: 14px;
-            font-size: 17px;
-            background: #0a775f;
-            color: white;
+            background: #008f6b;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 6px;
+            color: white;
+            font-size: 18px;
         }
-        button:disabled {
-            opacity: 0.6;
+
+        .today-box {
+            background: #e6f4ee;
+            padding: 10px;
+            border-radius: 6px;
+            color: #006b55;
+            margin-bottom: 15px;
+            font-size: 15px;
         }
+
         .error-text {
             color: red;
-            font-size: 13px;
+            font-size: 15px;
             margin-top: -10px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
-<div class="container">
-    <h2>診所線上預約</h2>
+    <div class="container">
+        <h2 style="text-align:center;color:#005f4e;">診所線上預約</h2>
 
-    <label>姓名（必填）：</label>
-    <input type="text" id="name" placeholder="請輸入姓名">
+        <label>姓名（必填）：</label>
+        <input type="text" id="name" />
 
-    <label>電話（必填）：</label>
-    <input type="text" id="phone" placeholder="09XXXXXXXX">
+        <label>電話（必填）：</label>
+        <input type="text" id="phone" />
 
-    <label>身分證字號 / 護照號碼（必填）：</label>
-    <input type="text" id="idNumber" placeholder="台灣身分證或護照">
+        <label>身分證字號 / 護照號碼（必填）：</label>
+        <input type="text" id="idNumber" />
 
-    <label>出生年月日（必填）：</label>
-    <input type="date" id="birthday">
+        <label>出生年月日（必填）：</label>
+        <input type="date" id="birthday" />
 
-    <label>預約日期（當日不可預約）：</label>
-    <input type="date" id="date">
+        <label>預約日期（當日不可預約）：</label>
+        <input type="date" id="date" />
 
-    <label>預約時段：</label>
-    <select id="section">
-        <option value="">請選擇時段</option>
-        <option value="morning">早診（08:00–12:00）</option>
-        <option value="afternoon">午診（14:30–18:00）</option>
-        <option value="night">晚診（18:30–20:00）</option>
-    </select>
+        <label>預約時段：</label>
+        <select id="section">
+            <option disabled selected>請選擇時段</option>
+            <option value="morning">早診（08:00–12:00）</option>
+            <option value="afternoon">午診（14:30–18:00）</option>
+            <option value="night">晚診（18:30–20:00）</option>
+        </select>
 
-    <label>醫師：</label>
-    <select id="doctor">
-        <option value="">請先選擇時段</option>
-    </select>
+        <label>醫師：</label>
+        <select id="doctor">
+            <option disabled selected>請先選擇時段</option>
+        </select>
 
-    <div id="summary" class="summary-box"></div>
+        <div id="todayDoctor" class="today-box"></div>
 
-    <p class="error-text" id="err"></p>
+        <p class="error-text" id="err"></p>
 
-    <button id="submitBtn" onclick="submitBooking()">送出預約</button>
-</div>
+        <button onclick="submitBooking()">送出預約</button>
+    </div>
 
-<script src="booking.js"></script>
+    <script src="booking.js"></script>
 </body>
 </html>

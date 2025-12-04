@@ -1,111 +1,72 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>後台管理系統 - 預約紀錄</title>
-<script src="admin.js"></script>
-
-<!-- 匯出 Excel 用 -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<title>預約後台</title>
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    padding: 20px;
+    font-family: "Noto Sans TC";
+    background: #f0f6f4;
 }
-
-/* 登入畫面 */
-#loginBox {
-    width: 300px;
-    margin: 120px auto;
-    padding: 20px;
+.container {
+    max-width: 900px;
+    margin: 20px auto;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    padding: 25px;
+    border-radius: 12px;
 }
-
-#loginBox input {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    margin-top: 10px;
-}
-
-#loginBox button {
-    margin-top: 15px;
-    width: 100%;
-    padding: 10px;
-    background: #0BA18C;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-/* 後台主畫面 */
-#adminPanel {
-    display: none;
-}
-
 table {
     width: 100%;
-    margin-top: 20px;
     border-collapse: collapse;
-    background: white;
+    margin-top: 15px;
 }
-
-table th, table td {
-    border: 1px solid #ddd;
-    padding: 10px;
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
 }
-
-table th {
-    background: #0BA18C;
+th {
+    background: #006b55;
     color: white;
 }
-
-/* 匯出按鈕 */
-#exportBtn {
-    background: #0370C1;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 6px;
+button {
+    padding: 8px 16px;
+    background: #008f6b;
     border: none;
-    font-size: 15px;
+    border-radius: 6px;
+    color: white;
+    margin-right: 10px;
 }
 </style>
 </head>
 
 <body>
+<div class="container">
+    <h2>診所預約後台</h2>
 
-<!-- 登入畫面 -->
-<div id="loginBox">
-    <h2 style="text-align:center;">後台登入</h2>
-    <input type="password" id="adminPwd" placeholder="請輸入後台密碼">
-    <button onclick="checkLogin()">登入</button>
-    <p id="loginMsg" style="color:red; text-align:center;"></p>
+    <div id="loginBox">
+        <p>請輸入後台密碼：</p>
+        <input type="password" id="pwd" />
+        <button onclick="login()">登入</button>
+        <p id="msg" style="color:red;"></p>
+    </div>
+
+    <div id="adminBox" style="display:none;">
+        <button onclick="exportExcel()">匯出 Excel</button>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>姓名</th><th>電話</th><th>證件</th>
+                    <th>生日</th><th>日期</th><th>時段</th><th>醫師</th><th>刪除</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
-
-<!-- 後台主畫面 -->
-<div id="adminPanel">
-    <h1>預約紀錄後台管理</h1>
-
-    <button id="exportBtn" onclick="exportExcel()">匯出 Excel</button>
-
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>ID</th><th>姓名</th><th>電話</th>
-                <th>證件</th><th>生日</th>
-                <th>日期</th><th>時段</th><th>醫師</th>
-                <th>建立時間</th><th>刪除</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
-
+<script src="admin.js"></script>
 </body>
 </html>

@@ -1,197 +1,126 @@
-const API_URL = "https://clinic-booking-yb4u.onrender.com";
+//-----------------------------------------
+// 禁止選今天以前日期
+//-----------------------------------------
+const today = new Date().toISOString().split("T")[0];
+document.getElementById("date").setAttribute("min", today);
 
-// =====================
-//  固定班表（週一～週五）
-// =====================
-const weekdaySchedule = {
-  1: { // 週一
-    morning: ["吳立偉院長", "郭芷毓醫師"],
-    afternoon: ["林峻豪副院長"],
-    night: ["林峻豪副院長"]
-  },
-  2: { // 週二
-    morning: ["林峻豪副院長"],
-    afternoon: ["郭芷毓醫師"],
-    night: ["吳立偉院長", "郭芷毓醫師"]
-  },
-  3: { // 週三
-    morning: ["吳立偉院長", "郭芷毓醫師"],
-    afternoon: ["黃俞華副院長"],
-    night: ["黃俞華副院長"]
-  },
-  4: { // 週四
-    morning: ["吳立偉院長"],
-    afternoon: ["林峻豪副院長"],
-    night: ["吳立偉院長"]
-  },
-  5: { // 週五
-    morning: ["林峻豪副院長", "郭芷毓醫師"],
-    afternoon: ["郭芷毓醫師"],
-    night: ["林峻豪副院長"]
-  }
-};
+//-----------------------------------------
+// 時段 → 醫師排班（含週六輪值）
+//-----------------------------------------
+async function loadSchedule() {
+    const res = await fetch("schedule.json");
+    return res.json();
+}
 
-// =====================
-//  週六輪值：依日期決定醫師
-//  2025/12/06、12/20 → 劉俊良
-//  2025/12/13、12/27 → 林峻豪
-// =====================
-const saturdayMap = {
-  "2025-12-06": "劉俊良醫師",
-  "2025-12-20": "劉俊良醫師",
-  "2025-12-13": "林峻豪副院長",
-  "2025-12-27": "林峻豪副院長"
-};
+let schedule = {};
+loadSchedule().then(data => schedule = data);
 
-// 預約日期 input：設定「不得選今天以前」
-(function setMinDate() {
-  const dateInput = document.getElementById("date");
-  const today = new Date();
-  today.setDate(today.getDate() + 1); // 明天開始可預約
+//-----------------------------------------
+// 時段變動 → 更新醫師
+//-----------------------------------------
+document.getElementById("time").addEventListener("change", updateDoctor);
 
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  dateInput.min = `${yyyy}-${mm}-${dd}`;
-})();
+function updateDoctor() {
+    const time = document.getElementById("time").value;
+    const date = document.getElementById("date").value;
 
-// 綁定事件
-document.getElementById("date").addEventListener("change", loadDoctors);
-document.getElementById("time").addEventListener("change", loadDoctors);
-document.getElementById("doctor").addEventListener("change", updateSummary);
+    let doctorSelect = document.getElementById("doctor");
+    doctorSelect.innerHTML = '<option value="">請選擇醫師</option>';
 
-// 依日期 + 時段載入可選醫師
-function loadDoctors() {
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
-  const doctorSelect = document.getElementById("doctor");
-  const err = document.getElementById("err");
+    if (!time || !date) return;
 
-  doctorSelect.innerHTML = `<option value="">請先選擇時段</option>`;
-  document.getElementById("summary").innerHTML = "";
-  err.textContent = "";
+    const week = new Date(date).getDay();
+    let doctorList = [];
 
-  if (!date || !time) return;
+    if (week === 6) {
+        //-------------------
+        // 週六輪值
+        //-------------------
+        const list = schedule.saturday;
+        const order = list.order;
+        const first = order[0], second = order[1];
 
-  const d = new Date(date);
-  const jsDay = d.getDay(); // 0~6, 0=Sunday
+        const thisDate = new Date(date);
+        const day = thisDate.getDate();
 
-  let doctors = [];
+        // 奇數週六 → 第一位醫師
+        // 偶數週六 → 第二位醫師
+        const doc = (day % 2 === 1 ? list[first] : list[second]);
+        doctorList.push(doc);
 
-  if (jsDay === 6) { // 週六
-    const key = date; // yyyy-mm-dd
-    const doc = saturdayMap[key];
-
-    if (doc && (time === "morning" || time === "afternoon")) {
-      doctors = [doc];
     } else {
-      doctors = []; // 其它情況目前視為無門診
+        //-------------------
+        // 平日
+        //-------------------
+        doctorList = schedule.week[week][time];
     }
 
-  } else if (jsDay >= 1 && jsDay <= 5) {
-    doctors = (weekdaySchedule[jsDay] && weekdaySchedule[jsDay][time]) || [];
-  } else {
-    // 週日不看診
-    doctors = [];
-  }
-
-  if (!doctors || doctors.length === 0) {
-    doctorSelect.innerHTML = `<option value="">本時段暫無門診</option>`;
-    err.textContent = "本日期 / 時段無門診，請改選其他時間。";
-    return;
-  }
-
-  doctorSelect.innerHTML = `<option value="">請選擇醫師</option>`;
-  doctors.forEach(dname => {
-    const opt = document.createElement("option");
-    opt.value = dname;
-    opt.textContent = dname;
-    doctorSelect.appendChild(opt);
-  });
-
-  updateSummary();
-}
-
-// 顯示本日門診醫師
-function updateSummary() {
-  const doctor = document.getElementById("doctor").value;
-  const summary = document.getElementById("summary");
-  if (!doctor) {
-    summary.innerHTML = "";
-    return;
-  }
-  summary.innerHTML = `本日門診醫師：<b>${doctor}</b>`;
-}
-
-// 送出預約
-async function submitBooking() {
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const id_number = document.getElementById("id_number").value.trim();
-  const birthday = document.getElementById("birthday").value;
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
-  const doctor = document.getElementById("doctor").value;
-  const err = document.getElementById("err");
-
-  err.textContent = "";
-
-  if (!name || !phone || !id_number || !birthday || !date || !time || !doctor) {
-    err.textContent = "所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）。";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/booking`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, id_number, birthday, date, time, doctor })
+    doctorList.forEach(d => {
+        const op = document.createElement("option");
+        op.value = d;
+        op.textContent = d;
+        doctorSelect.appendChild(op);
     });
 
-    const data = await res.json();
+    document.getElementById("summary").innerHTML = 
+        `本日門診醫師：<strong>${doctorList.join("、")}</strong>`;
+}
 
-    if (data.error) {
-      err.textContent = data.error;
-      return;
+//-----------------------------------------
+// 送出預約
+//-----------------------------------------
+async function submitBooking() {
+
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const id_number = document.getElementById("id_number").value.trim();
+    const birthday = document.getElementById("birthday").value;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+    const doctor = document.getElementById("doctor").value;
+
+    if (!name || !phone || !id_number || !birthday || !date || !time || !doctor) {
+        document.getElementById("err").textContent = "所有欄位皆必填！";
+        return;
     }
 
-    if (data.message && data.message.indexOf("不可重複") !== -1) {
-      alert(data.message);
-      return;
+    const body = { name, phone, id_number, birthday, date, time, doctor };
+
+    let res = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+    });
+
+    res = await res.json();
+
+    if (res.error) {
+        document.getElementById("err").textContent = "寫入失敗：" + res.error;
+        return;
     }
 
-    // 成功提示（簡單版）
-   // 轉換中文時段
-let timeText = "";
-if (time === "morning") timeText = "早診（08:00–12:00）";
-if (time === "afternoon") timeText = "午診（14:30–18:00）";
-if (time === "night") timeText = "晚診（18:30–20:00）";
+    //-----------------------------------------
+    // Popup 顯示
+    //-----------------------------------------
+    const timeLabel = {
+        morning: "早診（08:00–12:00）",
+        afternoon: "午診（14:30–18:00）",
+        night: "晚診（18:30–20:00）"
+    };
 
-// 排版 popup 內容
-const popupHTML = `
-  <strong>姓名：</strong>${name}<br>
-  <strong>日期：</strong>${date}<br>
-  <strong>時段：</strong>${timeText}<br>
-  <strong>醫師：</strong>${doctor}
-`;
+    document.getElementById("popupDetails").innerHTML = `
+        <div style="font-size:16px;line-height:1.8;text-align:left;margin-top:10px;">
+            <strong>姓名：</strong>${name}<br>
+            <strong>日期：</strong>${date}<br>
+            <strong>時段：</strong>${timeLabel[time]}<br>
+            <strong>醫師：</strong>${doctor}
+        </div>
+    `;
 
-document.getElementById("popupDetails").innerHTML = popupHTML;
+    document.getElementById("successPopup").style.display = "flex";
+}
 
-// 顯示 popup
-document.getElementById("successPopup").style.display = "flex";
-
-
-    // 清空表單
-    document.getElementById("name").value = "";
-    document.getElementById("phone").value = "";
-    document.getElementById("id_number").value = "";
-    document.getElementById("birthday").value = "";
-    document.getElementById("date").value = "";
-    document.getElementById("time").value = "";
-    document.getElementById("doctor").innerHTML = `<option value="">請先選擇時段</option>`;
-    document.getElementById("summary").innerHTML = "";
-  } catch (e) {
-    err.textContent = "送出失敗，請稍後再試。";
-    console.error(e);
-  }
+//-----------------------------------------
+function closePopup() {
+    document.getElementById("successPopup").style.display = "none";
 }

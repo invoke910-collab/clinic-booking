@@ -1,179 +1,144 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>診所線上預約</title>
-  <style>
-    body {
-      font-family: "Microsoft JhengHei", sans-serif;
-      background: #e8f5f3;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>診所線上預約</title>
 
-    .container {
-      max-width: 420px;
-      background: white;
-      margin: 30px auto;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    h2 {
-      text-align: center;
-      color: #007f67;
-      margin-bottom: 20px;
-    }
-
-    label {
-      font-weight: bold;
-      margin-top: 12px;
-      display: block;
-      color: #007f67;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 25px;
-      padding: 12px;
-      font-size: 18px;
-      background: #008f72;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #006f59;
-    }
-
-    .error-msg {
-      color: red;
-      margin-top: 10px;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    .doctor-box {
-      margin-top: 8px;
-      font-size: 15px;
-      color: #444;
-      padding: 8px;
-      background: #f2f2f2;
-      border-radius: 6px;
-    }
-  </style>
+<style>
+body {
+  background: #e8f5f3;
+  font-family: "Microsoft JhengHei", sans-serif;
+}
+.container {
+  max-width: 420px;
+  margin: 20px auto;
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+h2 {
+  text-align: center;
+  color: #0d7a63;
+  margin-bottom: 20px;
+}
+label { display: block; margin: 10px 0 5px; color: #0d7a63; }
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+button {
+  width: 100%;
+  padding: 14px;
+  background: #0d7a63;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  margin-top: 10px;
+}
+.note { color: red; font-size: 14px; text-align:center; margin-top: 10px; }
+</style>
 </head>
 
 <body>
-  <div class="container">
-    <h2>診所線上預約</h2>
+<div class="container">
+  <h2>診所線上預約</h2>
 
-    <label>姓名（必填）：</label>
-    <input id="name" placeholder="請輸入姓名" />
+  <!-- 姓名 -->
+  <label>姓名（必填）：</label>
+  <input id="name">
 
-    <label>電話（必填）：</label>
-    <input id="phone" placeholder="請輸入電話" />
+  <!-- 電話 -->
+  <label>電話（必填）：</label>
+  <input id="phone">
 
-    <label>身分證字號 / 護照號碼（必填）：</label>
-    <input id="idno" placeholder="台灣填身分證；外國人填護照號碼" />
+  <!-- 身分證 / 護照 -->
+  <label>身分證字號 / 護照號碼（必填）：</label>
+  <input id="idno">
+  <small>台灣身分證會自動驗證；外國護照不驗證格式。</small>
 
-    <label>出生年月日（必填）：</label>
-    <input type="date" id="birthday" />
+  <!-- 出生年月日 -->
+  <label>出生年月日（必填）：</label>
+  <input type="date" id="birthday">
 
-    <label>預約日期（當日不可預約）：</label>
-    <input type="date" id="date" min="" />
+  <!-- 預約日期 -->
+  <label>預約日期（當日不可預約）：</label>
+  <input type="date" id="date">
 
-    <label>預約時段：</label>
-    <select id="section">
-      <option value="">請選擇預約時段</option>
-      <option value="morning">早診（08:00–12:00）</option>
-      <option value="noon">午診（14:30–18:30）</option>
-      <option value="night">晚診（18:30–20:00）</option>
-    </select>
+  <!-- 時段 -->
+  <label>預約時段：</label>
+  <select id="section">
+    <option value="morning">早診（08:00–12:00）</option>
+    <option value="noon">午診（14:30–18:30）</option>
+    <option value="night">晚診（18:30–20:00）</option>
+  </select>
 
-    <div id="doctorDisplay" class="doctor-box" style="display:none;"></div>
+  <!-- 醫師選擇 -->
+  <label id="doctorLabel">醫師：</label>
+  <select id="doctor"></select>
+  <div id="doctorInfo" style="margin-top:8px; color:#555;"></div>
 
-    <div id="error" class="error-msg"></div>
+  <button onclick="submitBooking()">送出預約</button>
+  <div class="note">※欄位皆為必填</div>
+</div>
 
-    <button onclick="submitBooking()">送出預約</button>
-  </div>
+
+<!-- ======================= -->
+<!-- JS 區域（含 Fetch 排班） -->
+<!-- ======================= -->
 
 <script>
-// ================================
-//  醫師排班（依你提供的海報）
-// ================================
-const schedule = {
-  1: { // 週一
-    morning: ["吳立偉院長"],
-    noon: ["郭芷毓醫師"],
-    night: ["林峻豪副院長"]
-  },
-  2: { // 週二
-    morning: ["林峻豪副院長"],
-    noon: ["郭芷毓醫師"],
-    night: ["吳立偉院長", "郭芷毓醫師"]   // ★雙醫師
-  },
-  3: { // 週三
-    morning: ["吳立偉院長"],
-    noon: ["郭芷毓醫師"],
-    night: ["黃前華副院長"]
-  },
-  4: { // 週四
-    morning: ["吳立偉院長"],
-    noon: ["林峻豪副院長"],
-    night: ["林峻豪副院長"]
-  },
-  5: { // 週五
-    morning: ["林峻豪副院長"],
-    noon: ["郭芷毓醫師"],
-    night: ["郭芷毓醫師"]
-  },
-  6: { // 週六（輪值）
-    morning: ["劉俊良醫師（輪值）", "林峻豪副院長（輪值）"],   // ★固定兩位
-    noon: ["劉俊良醫師（輪值）", "林峻豪副院長（輪值）"],
-    night: []
-  },
-  0: { morning: [], noon: [], night: [] } // 週日無門診
-};
+// 今日不可預約
+document.addEventListener("DOMContentLoaded", () => {
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("date").setAttribute("min", today);
+});
 
-// ================================
-//  更新醫師資訊（診別改變時）
-// ================================
-function updateDoctorInfo() {
-  const date = document.getElementById("date").value;
-  const section = document.getElementById("section").value;
+// 身分證驗證
+function validateTWID(id) {
+  const regex = /^[A-Z][12][0-9]{8}$/;
+  return regex.test(id.toUpperCase());
+}
 
-  if (!date || !section) return;
+let schedule = {};   // 從 schedule.json 載入
 
-  const weekday = new Date(date).getDay();
-  const doctors = schedule[weekday][section];
+// 讀取 schedule.json
+fetch("schedule.json")
+  .then(r => r.json())
+  .then(data => { schedule = data; });
 
-  const doctorDiv = document.getElementById("doctorArea");
+// 當日期 or 時段變更 → 動態顯示醫師
+document.getElementById("date").addEventListener("change", loadDoctor);
+document.getElementById("section").addEventListener("change", loadDoctor);
+
+function loadDoctor() {
+  const d = document.getElementById("date").value;
+  const s = document.getElementById("section").value;
+
+  if (!d || !s) return;
+
+  const wd = new Date(d).getDay();
+  const doctors = (schedule[wd] && schedule[wd][s]) ? schedule[wd][s] : [];
+
   const doctorSelect = document.getElementById("doctor");
+  const doctorInfo = document.getElementById("doctorInfo");
 
-  // 清空選項
   doctorSelect.innerHTML = "";
 
   if (doctors.length === 0) {
-    doctorDiv.innerHTML = "<span style='color:red'>此時段無門診</span>";
+    doctorInfo.innerHTML = "<span style='color:red'>此時段無門診</span>";
     return;
   }
 
-  // 顯示醫師文字 + 產生選項
-  doctorDiv.innerHTML = doctors.length > 1 ? "請選擇醫師：" : `當日門診醫師：${doctors[0]}`;
+  doctorInfo.innerHTML = doctors.length > 1
+    ? "雙診時段，可自行選擇醫師："
+    : "門診醫師：" + doctors[0];
 
   doctors.forEach(d => {
     const opt = document.createElement("option");
@@ -183,27 +148,33 @@ function updateDoctorInfo() {
   });
 }
 
-// ================================
-//  送出預約（新版後端格式）
-// ================================
+
+// 送出預約
 async function submitBooking() {
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const idno = document.getElementById("idno").value.trim();
-  const birthday = document.getElementById("birthday").value.trim();
-  const date = document.getElementById("date").value.trim();
-  const section = document.getElementById("section").value;
-  const doctor = document.getElementById("doctor").value;
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  const idno = idnoEl.value.trim();
+  const birthday = birthdayEl.value.trim();
+  const date = dateEl.value.trim();
+  const section = sectionEl.value;
+  const doctor = doctorEl.value;
 
   if (!name || !phone || !idno || !birthday || !date || !section || !doctor) {
-    alert("請填寫所有必填欄位！");
+    alert("請填寫所有欄位！");
     return;
   }
+
+  if (/^[A-Z]/i.test(idno) && !validateTWID(idno)) {
+    alert("身分證格式不正確！");
+    return;
+  }
+
+  const body = { name, phone, idno, birthday, date, section, doctor };
 
   const res = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, phone, idno, birthday, date, section, doctor })
+    body: JSON.stringify(body)
   });
 
   const data = await res.json();

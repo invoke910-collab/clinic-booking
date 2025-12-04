@@ -1,132 +1,125 @@
-// =====================================================
-// Ultra 版 — StandFit 診所線上預約 booking.js
-// =====================================================
+// ===========================
+//   診所班表讀取
+// ===========================
+async function loadSchedule() {
+    const res = await fetch("schedule.json");
+    const schedule = await res.json();
+    window.scheduleData = schedule;
+}
 
-// ---------------------------
-// 1. 班表：依星期 + 時段 → 自動帶出醫師
-// ---------------------------
-const schedule = {
-    1: { // 週一
-        morning: ["吳立偉院長", "郭芷毓醫師"],   // 雙診
-        afternoon: ["林峻豪副院長"],
-        night: ["林峻豪副院長"]
-    },
-    2: { // 週二
-        morning: ["林峻豪副院長"],
-        afternoon: ["郭芷毓醫師"],
-        night: ["吳立偉院長", "郭芷毓醫師"] // 雙診
-    },
-    3: { // 週三
-        morning: ["吳立偉院長"],
-        afternoon: ["黃俞華副院長"],
-        night: ["黃俞華副院長"]
-    },
-    4: { // 週四
-        morning: ["吳立偉院長"],
-        afternoon: ["林峻豪副院長"],
-        night: ["郭芷毓醫師"]
-    },
-    5: { // 週五
-        morning: ["林峻豪副院長"],
-        afternoon: ["郭芷毓醫師"],
-        night: ["郭芷毓醫師"]
-    },
-    6: { // 週六 → 固定（依你提供週六醫師序列）
-        morning: ["劉俊良醫師"],  // 12/6
-        afternoon: ["林峻豪副院長"], // 12/13
-        night: ["休診"] 
+// ===========================
+//   日期選擇 → 產生時段
+// ===========================
+function onDateChange() {
+    const date = document.getElementById("date").value;
+    if (!date) return;
+
+    const weekday = new Date(date).getDay(); // 0=日,1=一...
+
+    let sections = [];
+
+    if (weekday === 1) {  // 週一
+        sections = ["早診", "午診", "晚診"];
+    } 
+    else if (weekday === 2) { // 週二
+        sections = ["早診", "午診", "晚診"];
     }
-};
+    else if (weekday === 3) { // 週三
+        sections = ["早診", "午診", "晚診"];
+    }
+    else if (weekday === 4) { // 週四
+        sections = ["早診", "午診", "晚診"];
+    }
+    else if (weekday === 5) { // 週五
+        sections = ["早診", "午診"];
+    }
+    else if (weekday === 6) { // 週六
+        sections = ["早診"];
+    }
+    else {
+        sections = [];
+    }
 
+    const select = document.getElementById("section");
+    select.innerHTML = "";
 
-// ---------------------------
-// 2. 選擇日期自動判斷星期＋顯示可選醫師
-// ---------------------------
-document.getElementById("date").addEventListener("change", updateDoctorList);
-document.getElementById("section").addEventListener("change", updateDoctorList);
+    sections.forEach(s => {
+        const op = document.createElement("option");
+        op.value = s;
+        op.textContent = s;
+        select.appendChild(op);
+    });
 
-function updateDoctorList() {
+    onSectionChange();
+}
+
+// ===========================
+//   時段選擇 → 顯示今日醫師
+// ===========================
+function onSectionChange() {
     const date = document.getElementById("date").value;
     const section = document.getElementById("section").value;
     const doctorSelect = document.getElementById("doctor");
-
-    doctorSelect.innerHTML = "<option value=''>請選擇醫師</option>";
+    const msg = document.getElementById("doctor-today");
 
     if (!date || !section) return;
 
     const weekday = new Date(date).getDay();
-    const doctors = schedule[weekday]?.[section] || [];
+    let doctorList = [];
 
-    doctors.forEach(d => {
-        if (d !== "休診") {
-            doctorSelect.innerHTML += `<option value="${d}">${d}</option>`;
-        }
+    // 使用 schedule.json
+    doctorList = (window.scheduleData[weekday] && window.scheduleData[weekday][section])
+        ? window.scheduleData[weekday][section]
+        : [];
+
+    msg.textContent = "本日門診醫師：" + doctorList.join("、");
+
+    doctorSelect.innerHTML = "";
+    doctorList.forEach(d => {
+        const op = document.createElement("option");
+        op.value = d;
+        op.textContent = d;
+        doctorSelect.appendChild(op);
     });
-
-    updateSummary();
 }
 
-
-// ---------------------------
-// 3. UI 下方顯示今日門診醫師
-// ---------------------------
-function updateSummary() {
-    const date = document.getElementById("date").value;
-    const section = document.getElementById("section").value;
-
-    if (!date || !section) return;
-
-    const weekday = new Date(date).getDay();
-    const doctors = schedule[weekday]?.[section] || [];
-
-    document.getElementById("summary").innerHTML =
-        `本日門診醫師：${doctors.join("、")}`;
-}
-
-
-// ---------------------------
-// 4. 驗證 + 送出 API
-// ---------------------------
-function showErr(msg) {
-    document.getElementById("err").innerText = msg;
-}
-
+// ===========================
+//   送出預約送到後端
+// ===========================
 async function submitBooking() {
-    showErr("");
-
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const idNumber = document.getElementById("idNumber").value.trim();
-    const birthday = document.getElementById("birthday").value;
-    const date = document.getElementById("date").value;
-    const section = document.getElementById("section").value;
-    const doctor = document.getElementById("doctor").value;
+    const birthday = document.getElementById("birthday").value.trim();
+    const date = document.getElementById("date").value.trim();
+    const section = document.getElementById("section").value.trim();
+    const doctor = document.getElementById("doctor").value.trim();
 
     if (!name || !phone || !idNumber || !birthday || !date || !section || !doctor) {
-        showErr("所有欄位皆為必填（姓名、電話、證件、生日、日期、時段、醫師）");
+        alert("所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）");
         return;
     }
 
-    const payload = { name, phone, idNumber, birthday, date, section, doctor };
+    const res = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name,
+            phone,
+            idNumber,
+            birthday,
+            date,
+            section,
+            doctor
+        })
+    });
 
-    try {
-        const res = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+    const data = await res.json();
 
-        const data = await res.json();
-
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
-
-        alert("預約成功！");
-        location.reload();
-
-    } catch (err) {
-        showErr("連線錯誤，請稍後再試");
+    if (data.error) {
+        alert("錯誤：" + data.error);
+        return;
     }
+
+    alert("預約成功！\n預約編號：" + data.booking_id);
 }

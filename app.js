@@ -106,3 +106,18 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`API 已啟動於 Port ${PORT}`);
 });
+
+app.get("/admin/all", (req, res) => {
+    db.all("SELECT * FROM appointments ORDER BY created_at DESC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: "DB read error" });
+        res.json(rows);
+    });
+});
+
+app.delete("/admin/delete/:id", (req, res) => {
+    const id = req.params.id;
+    db.run("DELETE FROM appointments WHERE id = ?", [id], function(err) {
+        if (err) return res.status(500).json({ error: "Delete failed" });
+        res.json({ success: true });
+    });
+});

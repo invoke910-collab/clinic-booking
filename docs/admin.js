@@ -1,159 +1,138 @@
-// ====== 基本設定 ======
-const API_BASE = "https://clinic-booking-yb4u.onrender.com";
-const ADMIN_PASSWORD = "9100";
+// =========================================
+//  順立骨科診所預約系統 app.js（最終正式版）
+//  - SQLite 自動建立
+//  - 防重複預約
+//  - 可與前端 booking.html / admin.html 完整配合
+// =========================================
 
-const loginCard = document.getElementById("loginCard");
-const adminCard = document.getElementById("adminCard");
-const passwordInput = document.getElementById("passwordInput");
-const loginBtn = document.getElementById("loginBtn");
-const loginStatus = document.getElementById("loginStatus");
+const express = require("express");
+const cors = require("cors");
+const sqlite3 = require("sqlite3").verbose();
 
-const refreshBtn = document.getElementById("refreshBtn");
-const exportBtn = document.getElementById("exportBtn");
-const dataBody = document.getElementById("dataBody");
-const dataStatus = document.getElementById("dataStatus");
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-let currentData = [];
-
-// ====== 登入處理 ======
-loginBtn.addEventListener("click", handleLogin);
-passwordInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") handleLogin();
+// =========================================
+// 建立 / 連線資料庫
+// =========================================
+const db = new sqlite3.Database("./clinic.db", (err) => {
+  if (err) console.error(err.message);
+  else console.log("🔗 已連線 SQLite 資料庫 clinic.db");
 });
 
-function handleLogin() {
-  const pwd = passwordInput.value.trim();
-  if (!pwd) {
-    loginStatus.textContent = "請先輸入密碼。";
-    loginStatus.style.color = "#d32f2f";
-    return;
+// =========================================
+// 建立資料表（若不存在）
+// =========================================
+db.run(`
+  CREATE TABLE IF NOT EXISTS appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    id_number TEXT NOT NULL,
+    birthday TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    doctor TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+
+// =========================================
+//  🔥 API：建立預約 
+// =========================================
+app.post("/booking", (req, res) => {
+  const { name, phone, id_number, birthday, date, time, doctor } = req.body;
+
+  // 必填檢查
+  if (!name || !phone || !id_number || !birthday || !date || !time || !doctor) {
+    return res.status(400).json({
+      error: "所有欄位皆為必填（姓名、電話、證件、生日、日期、時段、醫師）"
+    });
   }
 
-  if (pwd !== ADMIN_PASSWORD) {
-    loginStatus.textContent = "密碼錯誤，請再試一次。";
-    loginStatus.style.color = "#d32f2f";
-    passwordInput.select();
-    return;
-  }
+  // 禁止同一人重複預約相同時段
+  const checkSQL = `
+      SELECT * FROM appointments
+      WHERE name = ? AND phone = ? AND date = ? AND time = ?
+  `;
 
-  loginStatus.textContent = "登入成功，正在載入資料…";
-  loginStatus.style.color = "#388e3c";
-
-  loginCard.classList.add("hidden");
-  adminCard.classList.remove("hidden");
-
-  loadData();
-}
-
-// ====== 讀取資料 ======
-async function loadData() {
-  dataStatus.textContent = "資料載入中…";
-  dataStatus.style.color = "#546e7a";
-  dataBody.innerHTML = "";
-
-  try {
-    const res = await fetch(`${API_BASE}/admin/all`);
-    const rows = await res.json();
-    currentData = Array.isArray(rows) ? rows : [];
-
-    if (!currentData.length) {
-      dataBody.innerHTML =
-        '<tr><td colspan="10" style="text-align:center;">目前尚無預約資料</td></tr>';
-      dataStatus.textContent = "0 筆預約資料。";
-      dataStatus.style.color = "#546e7a";
-      return;
+  db.get(checkSQL, [name, phone, date, time], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: "資料庫錯誤：" + err.message });
     }
 
-    renderTable(currentData);
-    dataStatus.textContent = `共 ${currentData.length} 筆預約資料。`;
-    dataStatus.style.color = "#546e7a";
-  } catch (err) {
-    console.error(err);
-    dataBody.innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#d32f2f;">無法載入資料，請稍後再試。</td></tr>';
-    dataStatus.textContent = "讀取失敗。";
-    dataStatus.style.color = "#d32f2f";
-  }
-}
+    if (row) {
+      return res.json({
+        message: "您已預約過此日期與時段，不可重複預約。",
+        conflict: row
+      });
+    }
 
-function renderTable(rows) {
-  dataBody.innerHTML = "";
-  rows.forEach((r) => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${r.id ?? ""}</td>
-      <td>${r.name ?? ""}</td>
-      <td>${r.phone ?? ""}</td>
-      <td>${r.id_number ?? ""}</td>
-      <td>${r.birthday ?? ""}</td>
-      <td>${r.date ?? ""}</td>
-      <td>${r.time ?? ""}</td>
-      <td>${r.doctor ?? ""}</td>
-      <td>${r.created_at ?? ""}</td>
-      <td>
-        <button class="btn btn-danger btn-sm" data-id="${r.id}">刪除</button>
-      </td>
+    // 寫入資料
+    const insertSQL = `
+      INSERT INTO appointments 
+      (name, phone, id_number, birthday, date, time, doctor)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    dataBody.appendChild(tr);
-  });
 
-  // 綁定刪除按鈕
-  dataBody.querySelectorAll("button[data-id]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-id");
-      if (!id) return;
-      if (confirm(`確定要刪除編號 #${id} 的預約紀錄嗎？`)) {
-        deleteRow(id);
+    db.run(
+      insertSQL,
+      [name, phone, id_number, birthday, date, time, doctor],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ error: "寫入資料失敗：" + err.message });
+        }
+
+        res.json({
+          message: "預約成功！",
+          booking_id: this.lastID,
+          data: { name, phone, id_number, birthday, date, time, doctor }
+        });
       }
-    });
+    );
   });
-}
+});
 
-// ====== 刪除資料 ======
-async function deleteRow(id) {
-  try {
-    const res = await fetch(`${API_BASE}/admin/delete/${id}`, {
-      method: "DELETE",
-    });
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error("刪除失敗");
-    }
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    alert("刪除失敗，請稍後再試。");
-  }
-}
 
-// ====== 匯出 Excel (xlsx) ======
-function exportExcel() {
-  if (!currentData || !currentData.length) {
-    alert("目前沒有資料可匯出。");
-    return;
-  }
+// =========================================
+//  🔥 API：後台取得全部資料
+// =========================================
+app.get("/admin/all", (req, res) => {
+  db.all("SELECT * FROM appointments ORDER BY created_at DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "讀取資料失敗：" + err.message });
+    res.json(rows);
+  });
+});
 
-  // 將欄位名稱改成中文表頭
-  const exportRows = currentData.map((r) => ({
-    ID: r.id ?? "",
-    姓名: r.name ?? "",
-    電話: r.phone ?? "",
-    "身分證／護照": r.id_number ?? "",
-    生日: r.birthday ?? "",
-    日期: r.date ?? "",
-    時段: r.time ?? "",
-    醫師: r.doctor ?? "",
-    建立時間: r.created_at ?? "",
-  }));
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(exportRows);
-  XLSX.utils.book_append_sheet(wb, ws, "預約紀錄");
+// =========================================
+//  🔥 API：後台刪除資料
+// =========================================
+app.delete("/admin/delete/:id", (req, res) => {
+  const id = req.params.id;
 
-  XLSX.writeFile(wb, "clinic-booking-appointments.xlsx");
-}
+  db.run("DELETE FROM appointments WHERE id = ?", [id], function (err) {
+    if (err) return res.status(500).json({ error: "刪除失敗：" + err.message });
 
-// ====== 按鈕事件 ======
-refreshBtn.addEventListener("click", loadData);
-exportBtn.addEventListener("click", exportExcel);
+    res.json({ success: true });
+  });
+});
+
+
+// =========================================
+//  測試首頁
+// =========================================
+app.get("/", (req, res) => {
+  res.send("Clinic booking API is running ✔");
+});
+
+
+// =========================================
+//  Render 啟動設定
+// =========================================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 API 已啟動於 Port ${PORT}`);
+});

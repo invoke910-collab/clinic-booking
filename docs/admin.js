@@ -1,100 +1,145 @@
+// ===========================================
+// admin.js — 後台管理
+// ===========================================
+
 const API_URL = "https://clinic-booking-yb4u.onrender.com";
 const ADMIN_PASSWORD = "9100";
 
-// 登入檢查
-function checkLogin() {
-  const pwdInput = document.getElementById("adminPwd");
-  const msg = document.getElementById("loginErr");
-  if (pwdInput.value === ADMIN_PASSWORD) {
+let currentData = [];
+
+// 密碼確認
+function checkPassword() {
+  const pwd = document.getElementById("adminPwd").value.trim();
+  if (pwd === ADMIN_PASSWORD) {
     document.getElementById("loginBox").style.display = "none";
     document.getElementById("adminPanel").style.display = "block";
-    loadData();
+    refreshData();
   } else {
-    msg.textContent = "密碼錯誤，請再試一次。";
+    alert("密碼錯誤");
   }
 }
 
-// 重新整理
-function reloadData() {
-  loadData();
-}
-
-// 讀取後端預約資料
-async function loadData() {
-  const tbody = document.getElementById("dataBody");
-  tbody.innerHTML = "<tr><td colspan='10'>讀取中...</td></tr>";
-
+// 取得全部預約資料
+async function refreshData() {
   try {
-    const res = await fetch(`${API_URL}/admin-data`);
-    const list = await res.json();
-
-    if (!Array.isArray(list) || list.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='10'>目前沒有任何預約資料。</td></tr>";
-      return;
-    }
-
-    tbody.innerHTML = list.map(row => `
-      <tr>
-        <td>${row.id}</td>
-        <td>${row.name}</td>
-        <td>${row.phone}</td>
-        <td>${row.id_number}</td>
-        <td>${row.birthday}</td>
-        <td>${row.date}</td>
-        <td>${row.time}</td>
-        <td>${row.doctor}</td>
-        <td>${row.created_at || ""}</td>
-        <td><button onclick="deleteRow(${row.id})">刪除</button></td>
-      </tr>
-    `).join("");
-
+    const res = await fetch(`${API_URL}/admin/all`);
+    const data = await res.json();
+    currentData = data;
+    renderTable(data);
   } catch (e) {
     console.error(e);
-    tbody.innerHTML = "<tr><td colspan='10'>讀取失敗，請稍後再試。</td></tr>";
+    alert("讀取資料失敗");
   }
 }
 
-// 刪除單筆資料
-async function deleteRow(id) {
-  if (!confirm(`確定要刪除 ID=${id} 這筆預約嗎？`)) return;
+// 將 time 轉成中文時段
+function timeToLabel(t) {
+  if (t === "morning") return "早診（08:00–12:00）";
+  if (t === "afternoon") return "午診（14:30–18:00）";
+  if (t === "night") return "晚診（18:30–20:00）";
+  return t || "";
+}
 
+// 繪製表格
+function renderTable(list) {
+  const tbody = document.getElementById("adminBody");
+  tbody.innerHTML = "";
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML =
+      `<tr><td colspan="10" style="color:#757575;">目前沒有預約資料</td></tr>`;
+    return;
+  }
+
+  list.forEach((row) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.id}</td>
+      <td>${row.name || ""}</td>
+      <td>${row.phone || ""}</td>
+      <td>${row.id_number || ""}</td>
+      <td>${row.birthday || ""}</td>
+      <td>${row.date || ""}</td>
+      <td>${timeToLabel(row.time)}</td>
+      <td>${row.doctor || ""}</td>
+      <td>${row.created_at || ""}</td>
+      <td>
+        <button class="btn danger" style="padding:4px 8px;font-size:12px;"
+          onclick="deleteBooking(${row.id})">刪除</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 刪除預約
+async function deleteBooking(id) {
+  if (!confirm(`確定要刪除 ID ${id} 這筆預約嗎？`)) return;
   try {
     const res = await fetch(`${API_URL}/admin/delete/${id}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
-    const result = await res.json();
-    if (result && result.success) {
-      alert("刪除成功！");
-      loadData();
+    const data = await res.json();
+    if (data && data.success) {
+      refreshData();
     } else {
-      alert("刪除失敗，請稍後再試。");
+      alert("刪除失敗");
     }
   } catch (e) {
     console.error(e);
-    alert("刪除失敗，請稍後再試。");
+    alert("刪除失敗");
   }
 }
 
-// 匯出 Excel（實際為 CSV，Excel 可直接開啟）
-function exportExcel() {
-  const table = document.querySelector("table");
-  let csv = "";
-
-  for (let i = 0; i < table.rows.length; i++) {
-    const cells = table.rows[i].cells;
-    let row = [];
-    for (let j = 0; j < cells.length - 1; j++) { // 最後一欄是「刪除」不匯出
-      let text = cells[j].innerText.replace(/"/g, '""');
-      row.push(`"${text}"`);
-    }
-    csv += row.join(",") + "\n";
+// 匯出成 CSV（Excel 可直接打開）
+function exportCSV() {
+  if (!currentData || currentData.length === 0) {
+    alert("沒有資料可以匯出");
+    return;
   }
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const header = [
+    "ID",
+    "姓名",
+    "電話",
+    "證件號碼",
+    "生日",
+    "預約日期",
+    "時段",
+    "醫師",
+    "建立時間",
+  ];
+
+  const rows = currentData.map((r) => [
+    r.id,
+    r.name || "",
+    r.phone || "",
+    r.id_number || "",
+    r.birthday || "",
+    r.date || "",
+    timeToLabel(r.time),
+    r.doctor || "",
+    r.created_at || "",
+  ]);
+
+  const all = [header, ...rows];
+
+  const csv = all
+    .map((row) =>
+      row
+        .map((cell) => {
+          const s = String(cell).replace(/"/g, '""');
+          return `"${s}"`;
+        })
+        .join(",")
+    )
+    .join("\r\n");
+
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "appointments.csv";
+  a.download = "clinic_bookings.csv";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

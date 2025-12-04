@@ -1,252 +1,155 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>順立骨科診所線上預約</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>順立骨科診所線上預約</title>
 
+<style>
     body {
-      margin: 0;
-      font-family: "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-      background: #e8f5f1;
-      display: flex;
-      justify-content: center;
+        font-family: "Noto Sans TC", sans-serif;
+        background: #e8f5f1;
+        margin: 0;
+        padding: 0;
     }
 
     .container {
-      width: 100%;
-      max-width: 420px;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px 18px 32px;
-      margin: 24px 12px;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        max-width: 420px;
+        margin: 20px auto;
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    h1 {
-      text-align: center;
-      color: #0b8463;
-      font-size: 20px;
-      margin: 0 0 18px;
+    h2 {
+        text-align: center;
+        color: #006c5f;
+        margin-bottom: 25px;
+        font-size: 22px;
     }
 
     label {
-      display: block;
-      margin: 10px 0 4px;
-      font-size: 14px;
-      color: #144b3d;
+        font-weight: bold;
+        display: block;
+        margin-top: 15px;
+        color: #003c36;
     }
 
-    input,
-    select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid #cfdad4;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      background: #ffffff;
+    input, select {
+        width: 100%;
+        font-size: 15px;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 6px;
+        border: 1px solid #c8d6d2;
     }
 
-    input:focus,
-    select:focus {
-      border-color: #0b8463;
-      box-shadow: 0 0 0 2px rgba(11, 132, 99, 0.15);
+    button {
+        width: 100%;
+        background: #008063;
+        color: #fff;
+        padding: 14px;
+        margin-top: 25px;
+        border-radius: 8px;
+        font-size: 17px;
+        border: none;
+        cursor: pointer;
     }
 
-    .hint {
-      font-size: 12px;
-      color: #777;
-      margin-top: 4px;
+    .footer-note {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+        color: #b44a4a;
     }
 
-    .summary-box {
-      margin-top: 10px;
-      font-size: 13px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: #f1fbf7;
-      color: #0b8463;
-      border: 1px dashed #9bd5c3;
+    /* Popup 美化 */
+    #popupBg {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
     }
 
-    .error-text {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #d32f2f;
-      min-height: 18px;
+    #popupBox {
+        background: #fff;
+        width: 85%;
+        max-width: 360px;
+        padding: 25px;
+        border-radius: 14px;
+        text-align: left;
+        line-height: 1.8;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     }
 
-    button.submit-btn {
-      width: 100%;
-      margin-top: 18px;
-      padding: 12px 0;
-      border-radius: 999px;
-      border: none;
-      background: #008866;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.08s;
+    #popupBox h3 {
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 15px;
     }
 
-    button.submit-btn:active {
-      transform: translateY(1px);
+    .popup-btn {
+        display: block;
+        margin: 18px auto 0;
+        padding: 10px 20px;
+        background: #2d73d2;
+        color: #fff;
+        font-size: 16px;
+        border-radius: 8px;
+        text-align: center;
+        width: 120px;
     }
-
-    button.submit-btn:hover {
-      background: #007057;
-    }
-
-    .required-tip {
-      margin-top: 8px;
-      font-size: 12px;
-      color: #e53935;
-      text-align: center;
-    }
-
-    /* ✅ 漂亮的彈跳視窗 */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-
-    .overlay.show {
-      display: flex;
-    }
-
-    .modal-box {
-      width: 88%;
-      max-width: 360px;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
-      padding: 18px 20px 16px;
-      animation: popup-in 0.18s ease-out;
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      text-align: center;
-      color: #0b8463;
-      margin-bottom: 10px;
-    }
-
-    .modal-body {
-      font-size: 14px;
-      color: #333;
-      line-height: 1.6;
-      text-align: left; /* ✅ 文字靠左 */
-      margin-bottom: 14px;
-    }
-
-    .modal-body p {
-      margin: 2px 0;
-    }
-
-    .modal-actions {
-      text-align: center;
-    }
-
-    .modal-actions button {
-      min-width: 120px;
-      padding: 8px 20px;
-      border-radius: 999px;
-      border: none;
-      background: #1976d2;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    @keyframes popup-in {
-      from {
-        opacity: 0;
-        transform: translateY(8px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        margin: 16px 10px;
-        padding: 20px 14px 26px;
-      }
-      h1 {
-        font-size: 18px;
-      }
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>順立骨科診所線上預約</h1>
+<div class="container">
+    <h2>順立骨科診所線上預約</h2>
 
-    <label for="name">姓名（必填）：</label>
-    <input id="name" type="text" placeholder="請輸入姓名">
+    <label>姓名（必填）：</label>
+    <input id="name" placeholder="請輸入姓名">
 
-    <label for="phone">電話（必填）：</label>
-    <input id="phone" type="tel" placeholder="請輸入行動電話">
+    <label>電話（必填）：</label>
+    <input id="phone" placeholder="請輸入行動電話">
 
-    <label for="idNumber">身分證字號 / 護照號碼（必填）：</label>
-    <input id="idNumber" type="text" placeholder="身分證/護照號碼">
-    <div class="hint">台灣身分證會進行格式驗證；外國護照不檢查格式。</div>
+    <label>身分證字號／護照號碼（必填）：</label>
+    <input id="id_number" placeholder="請輸入證件號碼">
 
-    <label for="birthday">出生年月日（必填）：</label>
-    <input id="birthday" type="date">
+    <label>出生年月日（必填）：</label>
+    <input type="date" id="birthday">
 
-    <label for="date">預約日期（當日不可預約）：</label>
-    <input id="date" type="date">
+    <label>預約日期（當日不可預約）：</label>
+    <input type="date" id="date">
 
-    <label for="section">預約時段：</label>
+    <label>預約時段：</label>
     <select id="section">
-      <option value="">請選擇時段</option>
+        <option value="">請選擇時段</option>
     </select>
 
-    <label for="doctor">醫師：</label>
-    <select id="doctor" disabled>
-      <option value="">請先選擇時段</option>
+    <label>醫師：</label>
+    <select id="doctor">
+        <option value="">請選擇時段</option>
     </select>
 
-    <div id="summary" class="summary-box">
-      本日門診醫師：尚未選擇日期與時段
+    <button onclick="submitBooking()">送出預約</button>
+
+    <div class="footer-note">所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）</div>
+</div>
+
+<!-- Popup -->
+<div id="popupBg">
+    <div id="popupBox">
+        <h3>預約成功！</h3>
+        <div id="popupContent"></div>
+        <div class="popup-btn" onclick="closePopup()">確定</div>
     </div>
+</div>
 
-    <div id="err" class="error-text"></div>
+<script src="booking.js"></script>
 
-    <button id="submitBtn" class="submit-btn">送出預約</button>
-
-    <div class="required-tip">
-      所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）
-    </div>
-  </div>
-
-  <!-- ✅ 彈跳視窗 -->
-  <div id="popupOverlay" class="overlay">
-    <div class="modal-box">
-      <div class="modal-title" id="popupTitle">提示</div>
-      <div class="modal-body" id="popupBody"></div>
-      <div class="modal-actions">
-        <button id="popupCloseBtn">確定</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="booking.js"></script>
 </body>
 </html>

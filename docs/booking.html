@@ -112,6 +112,74 @@
 
     <button onclick="submitBooking()">送出預約</button>
   </div>
+<!-- 🌟 預約成功彈跳視窗 -->
+<div id="successPopup" class="popup-overlay" style="display:none;">
+  <div class="popup-box">
+      <h2 class="popup-title">✅ 預約成功</h2>
+
+      <div id="popupDetails" class="popup-details">
+          <!-- JS 會自動填入內容 -->
+      </div>
+
+      <button class="popup-btn" onclick="closePopup()">確認</button>
+  </div>
+</div>
+
+<style>
+/* 背景遮罩 */
+.popup-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+/* 彈窗 */
+.popup-box {
+    background: white;
+    width: 80%;
+    max-width: 360px;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    animation: popIn 0.3s ease-out;
+}
+
+/* 標題 */
+.popup-title {
+    color: #0d8a6a;
+    margin-bottom: 15px;
+}
+
+/* 內容 */
+.popup-details {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+/* 按鈕 */
+.popup-btn {
+    width: 100%;
+    padding: 12px 0;
+    background: #0d8a6a;
+    color: white;
+    border: 0;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+/* 動畫 */
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+</style>
 
   <script src="booking.js"></script>
 </body>

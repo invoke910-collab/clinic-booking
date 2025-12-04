@@ -94,16 +94,16 @@ function updateSectionOptions() {
   if (!dateStr) return;
 
   const d = new Date(dateStr + "T00:00:00");
-  const weekday = d.getDay(); // 0=Sunday
+  const weekday = d.getDay(); // 0 = Sunday
 
-  // 週日休診
+  // ⭐ 週日休診
   if (weekday === 0) {
-    showPopup("提醒", ["週日休診，無法預約此日期。"]);
+    showPopup("提醒", ["週日休診，無法預約。"]);
     dateInput.value = "";
     return;
   }
 
-  // 過去＆當天禁止（雙重保護）
+  // ⭐ 過去日期與當天不可預約
   const todayStr = formatDate(new Date());
   if (dateStr <= todayStr) {
     showPopup("提醒", ["當日與過去日期不可預約。"]);
@@ -111,26 +111,28 @@ function updateSectionOptions() {
     return;
   }
 
+  // ⭐ 預設：早、午、晚
   let timeKeys = ["morning", "afternoon", "night"];
 
-  // ★ 週六：只有早診＋午診
+  // ⭐ 週六 → 只有早＋午（🔥 你要的修正版）
   if (weekday === 6) {
     timeKeys = ["morning", "afternoon"];
   }
 
-  // ★ 12/25 無晚診
+  // ⭐ 12/25（特例）無晚診
   if (dateStr === "2025-12-25") {
     timeKeys = ["morning", "afternoon"];
   }
 
-  // 渲染時段
-  timeKeys.forEach((t) => {
+  // ⭐ 產生時段下拉
+  timeKeys.forEach((tk) => {
     const opt = document.createElement("option");
-    opt.value = t;
-    opt.textContent = timeLabelMap[t];
+    opt.value = tk;
+    opt.textContent = timeLabelMap[tk];
     sectionSelect.appendChild(opt);
   });
 }
+
 
 // ================================
 // 更新「醫師」

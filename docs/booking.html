@@ -1,199 +1,112 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>診所線上預約</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>診所線上預約</title>
 
-<style>
-body { background:#f5f5f5; font-family:Arial; padding:20px; }
-.container {
-    max-width: 420px;
-    margin: auto;
-    background:white;
-    padding:25px;
-    border-radius:12px;
-    box-shadow:0 0 12px rgba(0,0,0,0.1);
-}
-input, select {
-    width:100%; padding:10px; margin-top:8px;
-    border:1px solid #ccc; border-radius:6px; font-size:16px;
-}
-label { font-weight:bold; margin-top:12px; display:block; }
-button {
-    width:100%; padding:14px; margin-top:22px;
-    background:#0BA18C; color:white; border:none;
-    border-radius:8px; font-size:18px;
-}
-#errorBox {
-    color:red; margin-top:14px; text-align:center;
-    font-size:15px;
-}
-#doctorDisplay {
-    background:#e3f8f0;
-    padding:10px; margin-top:10px;
-    border-radius:6px; color:#0B7C6C;
-    font-size:14px;
-}
-</style>
+    <!-- 字體＋基本設計 -->
+    <style>
+        body {
+            font-family: "Noto Sans TC", sans-serif;
+            background: #e8f5f1;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 420px;
+            margin: 20px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #0a775f;
+        }
+        label {
+            font-size: 15px;
+            font-weight: bold;
+            color: #0a775f;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 18px 0;
+            border-radius: 8px;
+            border: 1px solid #aaa;
+            font-size: 15px;
+        }
+        .summary-box {
+            background: #eefaf6;
+            padding: 10px;
+            border-radius: 8px;
+            color: #0a775f;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 17px;
+            background: #0a775f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:disabled {
+            opacity: 0.6;
+        }
+        .error-text {
+            color: red;
+            font-size: 13px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
+
 <body>
-
 <div class="container">
-<h2 style="text-align:center; color:#0B7C6C;">診所線上預約</h2>
+    <h2>診所線上預約</h2>
 
-<label>姓名（必填）：</label>
-<input id="name" type="text">
+    <label>姓名（必填）：</label>
+    <input type="text" id="name" placeholder="請輸入姓名">
 
-<label>電話（必填）：</label>
-<input id="phone" type="text">
+    <label>電話（必填）：</label>
+    <input type="text" id="phone" placeholder="09XXXXXXXX">
 
-<label>身分證字號 / 護照號碼（必填）：</label>
-<input id="idNumber" type="text">
+    <label>身分證字號 / 護照號碼（必填）：</label>
+    <input type="text" id="idNumber" placeholder="台灣身分證或護照">
 
-<label>出生年月日（必填）：</label>
-<input id="birthday" type="date">
+    <label>出生年月日（必填）：</label>
+    <input type="date" id="birthday">
 
-<label>預約日期（當日不可預約）：</label>
-<input id="date" type="date">
+    <label>預約日期（當日不可預約）：</label>
+    <input type="date" id="date">
 
-<label>預約時段：</label>
-<select id="section"></select>
+    <label>預約時段：</label>
+    <select id="section">
+        <option value="">請選擇時段</option>
+        <option value="morning">早診（08:00–12:00）</option>
+        <option value="afternoon">午診（14:30–18:00）</option>
+        <option value="night">晚診（18:30–20:00）</option>
+    </select>
 
-<label>醫師：</label>
-<select id="doctor"></select>
+    <label>醫師：</label>
+    <select id="doctor">
+        <option value="">請先選擇時段</option>
+    </select>
 
-<div id="doctorDisplay"></div>
+    <div id="summary" class="summary-box"></div>
 
-<div id="errorBox"></div>
+    <p class="error-text" id="err"></p>
 
-<button onclick="submitBooking()">送出預約</button>
+    <button id="submitBtn" onclick="submitBooking()">送出預約</button>
 </div>
 
-
-<script>
-// === 時段 ===
-const TIME_OPTIONS = {
-    "早診 (08:00–12:00)": "早診 (08:00–12:00)",
-    "午診 (14:30–18:00)": "午診 (14:30–18:00)",
-    "晚診 (18:30–20:00)": "晚診 (18:30–20:00)"
-};
-
-// === 醫師班表（含週六固定醫師） ===
-const DOCTOR_SCHEDULE = {
-    1: { // 週一
-        morning: ["吳立偉院長", "郭芷毓醫師"],
-        afternoon: ["林峻豪副院長"],
-        night: ["林峻豪副院長"]
-    },
-    2: { // 週二
-        morning: ["林峻豪副院長"],
-        afternoon: ["郭芷毓醫師"],
-        night: ["吳立偉院長", "郭芷毓醫師"]
-    },
-    3: { // 週三
-        morning: ["吳立偉院長", "郭芷毓醫師"],
-        afternoon: ["黃俞華副院長"],
-        night: ["黃俞華副院長"]
-    },
-    4: { // 週四
-        morning: ["吳立偉院長"],
-        afternoon: ["林峻豪副院長"],
-        night: ["郭芷毓醫師"]
-    },
-    5: { // 週五
-        morning: ["林峻豪副院長", "郭芷毓醫師"],
-        afternoon: ["郭芷毓醫師"],
-        night: ["林峻豪副院長"]
-    },
-    6: { // 週六固定輪值：12/6、13、20、27
-        morning: ["劉俊良醫師"],
-        afternoon: ["休診"],
-        night: ["休診"]
-    },
-    0: { morning:["休診"], afternoon:["休診"], night:["休診"] }
-};
-
-const dayMap = ["morning", "morning", "afternoon", "night"];
-
-// === 時段載入 ===
-const sectionSel = document.getElementById("section");
-Object.keys(TIME_OPTIONS).forEach(t => {
-    let opt = document.createElement("option");
-    opt.value = t;
-    opt.text = t;
-    sectionSel.appendChild(opt);
-});
-
-// === 當選擇日期時：根據日期 → 週幾 → 顯示醫師 ===
-document.getElementById("date").addEventListener("change", loadDoctor);
-
-function loadDoctor() {
-    const dateVal = document.getElementById("date").value;
-    const section = document.getElementById("section").value;
-    const doctorSel = document.getElementById("doctor");
-
-    if (!dateVal) return;
-
-    const d = new Date(dateVal);
-    const weekday = d.getDay();
-
-    const schedule = DOCTOR_SCHEDULE[weekday];
-
-    let timeKey =
-        section.includes("早") ? "morning" :
-        section.includes("午") ? "afternoon" :
-        "night";
-
-    let doctors = schedule[timeKey];
-
-    doctorSel.innerHTML = "";
-    doctors.forEach(doc => {
-        let opt = document.createElement("option");
-        opt.value = doc;
-        opt.text = doc;
-        doctorSel.appendChild(opt);
-    });
-
-    document.getElementById("doctorDisplay").innerText =
-        "本日門診醫師：" + doctors.join("、");
-}
-
-// === 預約送出 ===
-function submitBooking() {
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const idNumber = document.getElementById("idNumber").value.trim();
-    const birthday = document.getElementById("birthday").value;
-    const date = document.getElementById("date").value;
-    const section = document.getElementById("section").value;
-    const doctor = document.getElementById("doctor").value;
-
-    if (!name || !phone || !idNumber || !birthday || !date || !section || !doctor) {
-        document.getElementById("errorBox").innerText =
-            "※欄位皆為必填（姓名、電話、證件、生日、日期、時段、醫師）";
-        return;
-    }
-
-    fetch("https://clinic-booking-yb4u.onrender.com/booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            name, phone, idNumber, birthday, date,
-            section, doctor,
-            time: section   // ⭐ 這行加上，避免資料庫 time 欄位 Null
-        })
-    })
-    .then(res => res.json())
-    .then(result => {
-        if (result.error) {
-            alert(result.error);
-        } else {
-            alert("預約成功！");
-            location.reload();
-        }
-    });
-}
-</script>
+<script src="booking.js"></script>
 </body>
 </html>

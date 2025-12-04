@@ -1,10 +1,10 @@
 // ================================
-//  booking.js（iOS風格 B 完整版）
+//  booking.js（完整修正版）
 // ================================
 
 const API = "https://clinic-booking-yb4u.onrender.com/booking";
 
-// 正確週六輪值表（照你提供的）
+// 正確週六輪值表
 const saturdayDoctors = {
     "2025-12-06": "劉俊良醫師",
     "2025-12-13": "林峻豪副院長",
@@ -12,10 +12,13 @@ const saturdayDoctors = {
     "2025-12-27": "林峻豪副院長"
 };
 
-// 預設不選今天以前的日期
+// 特殊日期：無晚診（例如 12/25）
+const noNightDates = ["2025-12-25"];
+
+// 預設不選今天以前
 window.onload = () => {
     const today = new Date();
-    today.setDate(today.getDate() + 1); // 當天不可預約 → +1
+    today.setDate(today.getDate() + 1);
 
     let yyyy = today.getFullYear();
     let mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -24,44 +27,57 @@ window.onload = () => {
     document.getElementById("date").setAttribute("min", `${yyyy}-${mm}-${dd}`);
 };
 
-// 當選擇日期、時段 → 更新醫師欄位
 document.getElementById("date").addEventListener("change", updateDoctor);
 document.getElementById("time").addEventListener("change", updateDoctor);
 
 function updateDoctor() {
     const date = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
+    let timeSel = document.getElementById("time");
     const doctorSel = document.getElementById("doctor");
     const todayBox = document.getElementById("todayDoctor");
 
     doctorSel.innerHTML = `<option value="">請先選擇時段</option>`;
     todayBox.innerHTML = "";
 
-    if (!date || !time) return;
+    if (!date) return;
 
     const day = new Date(date).getDay();
 
+    // ↓↓↓ 禁止晚診（週六 & 特定日期）
+    if (day === 6 || noNightDates.includes(date)) {
+        // 移除晚診
+        [...timeSel.options].forEach(opt => {
+            if (opt.value === "night") opt.style.display = "none";
+        });
+    } else {
+        // 顯示晚診
+        [...timeSel.options].forEach(opt => opt.style.display = "block");
+    }
+
+    const time = timeSel.value;
+    if (!time) return;
+
     let doctor = "";
 
-    if (day === 6) {  
+    if (day === 6) {
         doctor = saturdayDoctors[date] || "輪值資訊未設定";
-    } else if (day === 1) { // 一
+    } else if (day === 1) {
         if (time === "morning") doctor = "吳立偉院長 ＆ 郭芷毓醫師";
         if (time === "afternoon") doctor = "林峻豪副院長";
         if (time === "night") doctor = "林峻豪副院長";
-    } else if (day === 2) { // 二
+    } else if (day === 2) {
         if (time === "morning") doctor = "林峻豪副院長";
         if (time === "afternoon") doctor = "郭芷毓醫師";
         if (time === "night") doctor = "吳立偉院長 ＆ 郭芷毓醫師";
-    } else if (day === 3) { // 三
+    } else if (day === 3) {
         if (time === "morning") doctor = "吳立偉院長 ＆ 郭芷毓醫師";
         if (time === "afternoon") doctor = "黃俞華副院長";
         if (time === "night") doctor = "黃俞華副院長";
-    } else if (day === 4) { // 四
+    } else if (day === 4) {
         if (time === "morning") doctor = "吳立偉院長";
         if (time === "afternoon") doctor = "林峻豪副院長";
         if (time === "night") doctor = "林峻豪副院長";
-    } else if (day === 5) { // 五
+    } else if (day === 5) {
         if (time === "morning") doctor = "林峻豪副院長";
         if (time === "afternoon") doctor = "郭芷毓醫師";
         if (time === "night") doctor = "郭芷毓醫師";
@@ -72,7 +88,6 @@ function updateDoctor() {
         todayBox.innerHTML = `本日門診醫師：${doctor}`;
     }
 }
-
 
 // =========================
 // 送出預約
@@ -91,12 +106,10 @@ async function submitBooking() {
         return;
     }
 
-    const payload = { name, phone, id_number, birthday, date, time, doctor };
-
     const res = await fetch(API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ name, phone, id_number, birthday, date, time, doctor })
     });
 
     const result = await res.json();
@@ -108,7 +121,6 @@ async function submitBooking() {
 
     popupShow(name, date, time, doctor);
 }
-
 
 // =========================
 // popup

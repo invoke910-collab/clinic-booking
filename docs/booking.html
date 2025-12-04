@@ -112,21 +112,50 @@
   </div>
 
 <script>
-// 醫師排班表
+// ================================
+//  醫師排班（依你提供的海報）
+// ================================
 const schedule = {
-  1: { morning: ["吳立偉院長", "郭芷毓醫師"], noon: ["林峻豪副院長"], night: ["林峻豪副院長"] },
-  2: { morning: ["林峻豪副院長"], noon: ["郭芷毓醫師"], night: ["吳立偉院長", "郭芷毓醫師"] },
-  3: { morning: ["吳立偉院長", "郭芷毓醫師"], noon: ["黃前華副院長"], night: ["黃前華副院長"] },
-  4: { morning: ["吳立偉院長"], noon: ["林峻豪副院長"], night: ["林峻豪副院長"] },
-  5: { morning: ["林峻豪副院長"], noon: ["郭芷毓醫師"], night: ["郭芷毓醫師"] },
-  6: { morning: ["劉俊良醫師", "林峻豪副院長"], noon: ["劉俊良醫師", "林峻豪副院長"], night: [] },
-  0: { morning: [], noon: [], night: [] }
+  1: { // 週一
+    morning: ["吳立偉院長"],
+    noon: ["郭芷毓醫師"],
+    night: ["林峻豪副院長"]
+  },
+  2: { // 週二
+    morning: ["林峻豪副院長"],
+    noon: ["郭芷毓醫師"],
+    night: ["吳立偉院長", "郭芷毓醫師"]   // ★雙醫師
+  },
+  3: { // 週三
+    morning: ["吳立偉院長"],
+    noon: ["郭芷毓醫師"],
+    night: ["黃前華副院長"]
+  },
+  4: { // 週四
+    morning: ["吳立偉院長"],
+    noon: ["林峻豪副院長"],
+    night: ["林峻豪副院長"]
+  },
+  5: { // 週五
+    morning: ["林峻豪副院長"],
+    noon: ["郭芷毓醫師"],
+    night: ["郭芷毓醫師"]
+  },
+  6: { // 週六（輪值）
+    morning: ["劉俊良醫師（輪值）", "林峻豪副院長（輪值）"],   // ★固定兩位
+    noon: ["劉俊良醫師（輪值）", "林峻豪副院長（輪值）"],
+    night: []
+  },
+  0: { morning: [], noon: [], night: [] } // 週日無門診
 };
 
-// 顯示醫師資訊
+// ================================
+//  更新醫師資訊（診別改變時）
+// ================================
 function updateDoctorInfo() {
   const date = document.getElementById("date").value;
   const section = document.getElementById("section").value;
+
   if (!date || !section) return;
 
   const weekday = new Date(date).getDay();
@@ -135,16 +164,16 @@ function updateDoctorInfo() {
   const doctorDiv = document.getElementById("doctorArea");
   const doctorSelect = document.getElementById("doctor");
 
+  // 清空選項
   doctorSelect.innerHTML = "";
 
   if (doctors.length === 0) {
-    doctorDiv.innerHTML = `<span style="color:red;">此時段無門診</span>`;
+    doctorDiv.innerHTML = "<span style='color:red'>此時段無門診</span>";
     return;
   }
 
-  doctorDiv.innerHTML = doctors.length > 1
-    ? "請選擇醫師："
-    : `當日門診醫師：${doctors[0]}`;
+  // 顯示醫師文字 + 產生選項
+  doctorDiv.innerHTML = doctors.length > 1 ? "請選擇醫師：" : `當日門診醫師：${doctors[0]}`;
 
   doctors.forEach(d => {
     const opt = document.createElement("option");
@@ -154,7 +183,9 @@ function updateDoctorInfo() {
   });
 }
 
-// 送出預約
+// ================================
+//  送出預約（新版後端格式）
+// ================================
 async function submitBooking() {
   const name = document.getElementById("name").value.trim();
   const phone = document.getElementById("phone").value.trim();
@@ -176,9 +207,8 @@ async function submitBooking() {
   });
 
   const data = await res.json();
-
   if (data.error) alert(data.error);
-  else alert(data.message);
+  else alert("預約成功！");
 }
 </script>
 

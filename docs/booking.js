@@ -1,12 +1,12 @@
 // ===============================
 //  booking.js（最終修正版）
-//  修正：週六午診無法顯示的 BUG
+//  修正：週六午診、醫師下拉不顯示
 //       修正：週日休診
-//       修正：日期不能選今天以前
-//       修正：醫師選單同步顯示
+//       修正：日期不可選今天以前
 // ===============================
 
-// 週一～週六班表
+
+// 平日固定班表
 const weeklySchedule = {
     1: { // Monday
         morning: ["吳立偉院長", "郭芷毓醫師"],
@@ -32,52 +32,58 @@ const weeklySchedule = {
         morning: ["林峻豪副院長"],
         afternoon: ["郭芷毓醫師"],
         night: ["郭芷毓醫師"]
-    },
-    6: { // Saturday（固定早/午診）
-        morning: ["劉俊良醫師", "林峻豪副院長"], // 只有早診 & 午診（不同日期不同醫師）
-        afternoon: ["劉俊良醫師", "林峻豪副院長"],
-        night: []   // 無晚診
     }
 };
 
-// 週六醫師輪值
-const saturdayMapping = {
-    "12/06": "劉俊良醫師",
-    "12/13": "林峻豪副院長",
-    "12/20": "劉俊良醫師",
-    "12/27": "林峻豪副院長"
-};
+
+// ===============================
+//    🔥 週六醫師輪值（不比字串）
+// ===============================
+function getSaturdayDoctor(dayOfMonth) {
+
+    // 每月 6 號 & 20 號 → 劉俊良
+    if (dayOfMonth === 6 || dayOfMonth === 20) return "劉俊良醫師";
+
+    // 每月 13 號 & 27 號 → 林峻豪
+    if (dayOfMonth === 13 || dayOfMonth === 27) return "林峻豪副院長";
+
+    // 其他日期如遇例外（保險回傳）
+    return "劉俊良醫師";
+}
 
 
 // ===============================
-// 限制：日期不可選今天以前（含今日）
+//    日期不能選今天以前
 // ===============================
 const dateInput = document.getElementById("date");
 const today = new Date();
-today.setDate(today.getDate() + 1);  // 明天起可預約
+today.setDate(today.getDate() + 1); // 今日不可選 → 明天起可選
 dateInput.min = today.toISOString().split("T")[0];
 
 
-// ===============================
-// 處理時段選單
-// ===============================
 const sectionSelect = document.getElementById("section");
 const doctorSelect = document.getElementById("doctor");
 
-dateInput.addEventListener("change", () => {
-    const selectedDate = new Date(dateInput.value);
-    let weekday = selectedDate.getDay(); // 0=Sun,1=Mon...6=Sat
 
+// ===============================
+//    選日期 → 顯示正確時段
+// ===============================
+dateInput.addEventListener("change", () => {
+
+    const selectedDate = new Date(dateInput.value);
+    const weekday = selectedDate.getDay(); // 0=Sun ... 6=Sat
+
+    // 重置
     sectionSelect.innerHTML = '<option value="">請選擇時段</option>';
     doctorSelect.innerHTML = '<option value="">請先選擇時段</option>';
 
-    // 週日休診
+    // === 週日休診 ===
     if (weekday === 0) {
         sectionSelect.innerHTML = '<option value="">本日休診</option>';
         return;
     }
 
-    // 週六 → 兩個診別：早 & 午
+    // === 週六（只有早 + 午）===
     if (weekday === 6) {
         sectionSelect.innerHTML += `
             <option value="morning">早診（08:00–12:00）</option>
@@ -86,7 +92,7 @@ dateInput.addEventListener("change", () => {
         return;
     }
 
-    // 平日（Mon–Fri）
+    // === 平日 ===
     sectionSelect.innerHTML += `
         <option value="morning">早診（08:00–12:00）</option>
         <option value="afternoon">午診（14:30–18:00）</option>
@@ -96,31 +102,36 @@ dateInput.addEventListener("change", () => {
 
 
 // ===============================
-// 依時段帶出醫師
+//    選時段 → 顯示醫師
 // ===============================
 sectionSelect.addEventListener("change", () => {
+
     const selectedDate = new Date(dateInput.value);
-    let weekday = selectedDate.getDay();
+    const weekday = selectedDate.getDay();
     const section = sectionSelect.value;
 
     doctorSelect.innerHTML = '<option value="">請選擇醫師</option>';
 
     if (!section) return;
 
-    let dateStr = dateInput.value.replace(/-/g, "/").slice(5); // 例如 12/06
-
-    // 週六固定醫師（依日期）
+    // ======= 週六（使用日期判斷輪值）========
     if (weekday === 6) {
-        let dr = saturdayMapping[dateStr];
+
+        const day = selectedDate.getDate();    // 6 / 13 / 20 / 27…
+        const dr = getSaturdayDoctor(day);
+
         if (section === "morning" || section === "afternoon") {
             doctorSelect.innerHTML += `<option value="${dr}">${dr}</option>`;
         }
         return;
     }
 
-    // 平日從 weeklySchedule 自動帶出
-    let doctors = weeklySchedule[weekday][section];
+
+    // ======= 平日從班表載入 ========
+    const doctors = weeklySchedule[weekday][section] || [];
+
     doctors.forEach(dr => {
         doctorSelect.innerHTML += `<option value="${dr}">${dr}</option>`;
     });
+
 });

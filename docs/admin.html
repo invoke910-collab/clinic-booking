@@ -1,136 +1,226 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>順立骨科診所 - 後台管理</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>順立骨科診所 - 線上預約後台</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-<!-- Table + Button 美化 -->
-<style>
     body {
-        font-family: "Noto Sans TC", sans-serif;
-        background: #e8f5f1;
-        margin: 0;
-        padding: 20px;
+      margin: 0;
+      font-family: "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: #f3f6fa;
+      color: #263238;
     }
 
-    h2 {
-        text-align: center;
-        margin-top: 10px;
-        color: #045c54;
+    .page {
+      max-width: 980px;
+      margin: 20px auto 32px;
+      padding: 0 12px;
     }
 
-    /* 密碼區塊 */
-    #loginBox {
-        max-width: 360px;
-        margin: 80px auto;
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        border: 1px solid #ccc;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    h1 {
+      font-size: 20px;
+      margin: 0 0 16px;
+      color: #0b8463;
+      text-align: center;
     }
 
-    #loginBox input {
-        width: 100%;
-        padding: 10px;
-        margin-top: 12px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 18px 16px 20px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+      margin-bottom: 16px;
     }
 
-    #loginBox button {
-        width: 100%;
-        margin-top: 20px;
-        padding: 12px;
-        font-size: 16px;
-        background: #007bff;
-        color: white;
-        border-radius: 8px;
-        border: none;
+    .login-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* 管理頁面 */
-    #adminPanel {
-        display: none;
+    .login-row input {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #cfd8dc;
+      min-width: 150px;
+      font-size: 14px;
     }
-    <button onclick="loadData()" class="reload-btn">重新整理</button>
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.08s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: #0b8463;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #06654a;
+    }
+
+    .btn-secondary {
+      background: #eceff1;
+      color: #37474f;
+    }
+
+    .btn-secondary:hover {
+      background: #dde2e6;
+    }
+
+    .btn-danger {
+      background: #e53935;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #c62828;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
     table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 4px;
     }
 
-    table th, table td {
-        border: 1px solid #ddd;
-        padding: 10px;
-        text-align: left;
+    thead {
+      background: #f1f4f7;
     }
 
-    table th {
-        background: #f0f0f0;
+    th,
+    td {
+      padding: 6px 8px;
+      border: 1px solid #e0e0e0;
+      text-align: left;
+      vertical-align: middle;
+      word-break: break-all;
     }
 
-    .btn-export {
-        margin-top: 20px;
-        padding: 12px 16px;
-        background: #28a745;
-        color: white;
-        border-radius: 8px;
-        border: none;
-        font-size: 15px;
+    th {
+      font-weight: 600;
+      color: #455a64;
     }
 
-    /* 手機 RWD */
-    @media (max-width: 768px) {
-        table th, table td {
-            font-size: 13px;
-            padding: 6px;
-        }
-        .btn-export {
-            width: 100%;
-        }
+    tbody tr:nth-child(even) {
+      background: #fafafa;
     }
-</style>
 
-<!-- Excel 匯出套件 -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    .status-text {
+      font-size: 13px;
+      color: #757575;
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin-left: 4px;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 720px) {
+      table {
+        font-size: 12px;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+      }
+    }
+  </style>
 </head>
-
 <body>
-<h2>順立骨科診所 - 後台管理</h2>
+  <div class="page">
+    <h1>順立骨科診所 - 線上預約後台</h1>
 
-<!-- ▼ 密碼登入區 ▼ -->
-<div id="loginBox">
-    <h3 style="text-align:center;">請輸入後台密碼</h3>
-    <input type="password" id="pwd" placeholder="請輸入密碼">
-    <button onclick="checkLogin()">登入</button>
-    <p id="loginErr" style="color:red;text-align:center;"></p>
-</div>
+    <!-- 登入卡片 -->
+    <div id="loginCard" class="card">
+      <div class="login-row">
+        <span>請輸入後台密碼：</span>
+        <input id="passwordInput" type="password" placeholder="請輸入密碼" />
+        <button id="loginBtn" class="btn btn-primary">登入</button>
+      </div>
+      <div class="status-text" id="loginStatus">提示：預設密碼為診所內部設定（目前為 9100）。</div>
+    </div>
 
-<!-- ▼ 後台管理區 ▼ -->
-<div id="adminPanel">
-    <button class="btn-export" onclick="exportXLSX()">匯出 Excel</button>
+    <!-- 後台主畫面 -->
+    <div id="adminCard" class="card hidden">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button id="refreshBtn" class="btn btn-secondary">重新整理</button>
+          <button id="exportBtn" class="btn btn-primary">匯出 Excel</button>
+        </div>
+        <div class="toolbar-right">
+          <span class="status-text" id="dataStatus">載入中…</span>
+        </div>
+      </div>
 
-    <table>
-        <thead>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
             <tr>
-                <th>ID</th>
-                <th>姓名</th>
-                <th>電話</th>
-                <th>證件號碼</th>
-                <th>生日</th>
-                <th>預約日期</th>
-                <th>時段</th>
-                <th>醫師</th>
-                <th>建立時間</th>
+              <th>ID</th>
+              <th>姓名</th>
+              <th>電話</th>
+              <th>身分證 / 護照</th>
+              <th>生日</th>
+              <th>日期</th>
+              <th>時段</th>
+              <th>醫師</th>
+              <th>建立時間</th>
+              <th>操作</th>
             </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-    </table>
-</div>
+          </thead>
+          <tbody id="dataBody"></tbody>
+        </table>
+      </div>
+      <div class="status-text">
+        若資料異常，請先按「重新整理」。如要備份，請按「匯出 Excel」。<span class="badge">UTF-8</span>
+      </div>
+    </div>
+  </div>
 
-<script src="admin.js"></script>
+  <!-- xlsx 套件（SheetJS） -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>

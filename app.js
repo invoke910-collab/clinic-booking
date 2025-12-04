@@ -1,211 +1,189 @@
-// app.js - 診所預約系統 v2（含身分證、生日、醫師排班、後台列表）
-
+// ===============================
+//  匯入套件
+// ===============================
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 
+// ===============================
+//  建立 Express APP
+// ===============================
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ★ 使用新資料庫檔名，避免舊表結構不合
-const DB_FILE = "./clinic_v2.db";
-
-const db = new sqlite3.Database(DB_FILE, (err) => {
-  if (err) console.error("連線資料庫失敗：", err.message);
-  else console.log("已連線 SQLite 資料庫", DB_FILE);
+// ===============================
+// 連線 SQLite 資料庫 clinic.db
+// ===============================
+const db = new sqlite3.Database("./clinic.db", (err) => {
+    if (err) console.error(err.message);
+    else console.log("已連線 SQLite 資料庫 clinic.db");
 });
 
-// ★ 醫師排班表（請依實際情況調整內容）
-// day: 0=Sunday, 1=Monday, ... 6=Saturday
-const schedule = {
-  0: { // Sunday
-    morning: "休診",
-    afternoon: "休診",
-    evening: "休診",
-  },
-  1: { // Monday  例：請依你實際門診表修改
-    morning: "吳立偉院長",
-    afternoon: "林峻豪副院長",
-    evening: "林峻豪副院長",
-  },
-  2: { // Tuesday
-    morning: "郭正毓醫師",
-    afternoon: "郭正毓醫師",
-    evening: "林峻豪副院長",
-  },
-  3: { // Wednesday
-    morning: "吳立偉院長",
-    afternoon: "黃前華副院長",
-    evening: "黃前華副院長",
-  },
-  4: { // Thursday
-    morning: "吳立偉院長",
-    afternoon: "林峻豪副院長",
-    evening: "郭正毓醫師",
-  },
-  5: { // Friday
-    morning: "林峻豪副院長",
-    afternoon: "郭正毓醫師",
-    evening: "林峻豪副院長",
-  },
-  6: { // Saturday — 固定顯示兩位醫師（輪值）
-    morning: "劉俊良醫師（輪值）、林峻豪副院長（輪值）",
-    afternoon: "劉俊良醫師（輪值）、林峻豪副院長（輪值）",
-    evening: "劉俊良醫師（輪值）、林峻豪副院長（輪值）",
-  },
-};
-
-// 依日期與時段取得今日醫師
-function getDoctorFor(dateStr, section) {
-  // dateStr 格式：YYYY-MM-DD
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d)) return "未知醫師";
-
-  const day = d.getDay(); // 0~6
-  const daySchedule = schedule[day];
-  if (!daySchedule) return "休診";
-
-  return daySchedule[section] || "休診";
-}
-
-// 建立資料表（若不存在）
+// ===============================
+// 建立預約資料表（若不存在）
+// ===============================
 db.run(`
-  CREATE TABLE IF NOT EXISTS appointments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    id_number TEXT NOT NULL,
-    birth TEXT NOT NULL,
-    date TEXT NOT NULL,
-    section TEXT NOT NULL,    -- morning / afternoon / evening
-    doctor TEXT NOT NULL,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )
+    CREATE TABLE IF NOT EXISTS appointments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        id_number TEXT,
+        birth_date TEXT,
+        date TEXT NOT NULL,
+        section TEXT NOT NULL,
+        time TEXT NOT NULL,
+        doctor TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
 `);
 
-// 台灣身分證檢查 (格式 + 檢查碼)
-function isTaiwanId(id) {
-  const upper = id.toUpperCase();
-  if (!/^[A-Z][12][0-9]{8}$/.test(upper)) return false;
+// ===============================
+// 建立排班資料表（若不存在）
+// ===============================
+// 用於方案 C：後台管理班表
+db.run(`
+    CREATE TABLE IF NOT EXISTS schedule (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        work_date TEXT NOT NULL,
+        doctor TEXT NOT NULL,
+        section TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+`);
 
-  const letters = "ABCDEFGHJKLMNPQRSTUVXYWZIO";
-  const code = letters.indexOf(upper.charAt(0)) + 10;
-  if (code < 10) return false;
+// ===============================
+// （API）查詢某日期負責醫師
+// GET /doctor?date=2025-12-08
+// ===============================
+app.get("/doctor", (req, res) => {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: "缺少 date 參數" });
 
-  const n1 = Math.floor(code / 10);
-  const n2 = code % 10;
+    db.all(
+        `SELECT doctor, section FROM schedule WHERE work_date = ?`,
+        [date],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ date, doctors: rows });
+        }
+    );
+});
 
-  let sum = n1 * 1 + n2 * 9;
-  for (let i = 1; i <= 8; i++) {
-    sum += parseInt(upper.charAt(i), 10) * (9 - i);
-  }
-  sum += parseInt(upper.charAt(9), 10);
+// ===============================
+// （API）後台更新班表（新增每日醫師）
+// POST /schedule
+// ===============================
+app.post("/schedule", (req, res) => {
+    const { work_date, doctor, section } = req.body;
 
-  return sum % 10 === 0;
-}
-
-// 預約 API
-app.post("/booking", (req, res) => {
-  const { name, phone, id_number, birth, date, section } = req.body;
-
-  if (!name || !phone || !id_number || !birth || !date || !section) {
-    return res.status(400).json({ error: "姓名、電話、身分證/護照、生日、日期、時段皆為必填" });
-  }
-
-  // 手機 / 電話簡單檢查（可自行再強化）
-  if (!/^[0-9\-+]{8,15}$/.test(phone)) {
-    return res.status(400).json({ error: "電話格式不正確" });
-  }
-
-  // 出生年月日簡單檢查
-  if (isNaN(new Date(birth + "T00:00:00"))) {
-    return res.status(400).json({ error: "出生年月日格式不正確" });
-  }
-
-  // 身分證 / 護照檢查：若是台灣身分證格式 → 進行檢查碼驗證，其餘視為護照 / 居留證
-  const upperId = id_number.toUpperCase();
-  if (/^[A-Z][12][0-9]{8}$/.test(upperId)) {
-    if (!isTaiwanId(upperId)) {
-      return res.status(400).json({ error: "身分證字號格式錯誤，請重新確認" });
-    }
-  }
-
-  // 依日期 + 時段決定醫師
-  const doctor = getDoctorFor(date, section);
-  if (!doctor || doctor === "休診") {
-    return res.status(400).json({ error: "該日期或時段無門診，無法預約" });
-  }
-
-  // 檢查是否同人重複預約同一日期 + 時段（姓名 + 電話）
-  const checkSql = `
-    SELECT 1 FROM appointments
-    WHERE name = ? AND phone = ? AND date = ? AND section = ?
-  `;
-  db.get(checkSql, [name, phone, date, section], (err, row) => {
-    if (err) {
-      console.error("查詢失敗：", err);
-      return res.status(500).json({ error: "伺服器錯誤" });
+    if (!work_date || !doctor || !section) {
+        return res.status(400).json({ error: "work_date、doctor、section 必填" });
     }
 
-    if (row) {
-      return res.status(400).json({
-        error: "您已預約過相同日期與時段，請勿重複預約",
-      });
-    }
-
-    const insertSql = `
-      INSERT INTO appointments (name, phone, id_number, birth, date, section, doctor)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+    const sql = `
+        INSERT INTO schedule (work_date, doctor, section)
+        VALUES (?, ?, ?)
     `;
-    db.run(
-      insertSql,
-      [name, phone, id_number, birth, date, section, doctor],
-      function (err2) {
-        if (err2) {
-          console.error("新增預約失敗：", err2);
-          return res.status(500).json({ error: "預約失敗" });
+
+    db.run(sql, [work_date, doctor, section], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        res.json({
+            message: "班表新增成功",
+            id: this.lastID,
+            data: { work_date, doctor, section }
+        });
+    });
+});
+
+// ===============================
+// （API）後台刪除班表項目
+// DELETE /schedule/:id
+// ===============================
+app.delete("/schedule/:id", (req, res) => {
+    const id = req.params.id;
+
+    db.run(`DELETE FROM schedule WHERE id = ?`, [id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        res.json({ message: "刪除成功", deleted: this.changes });
+    });
+});
+
+// ===============================
+// （API）後台取得整個班表
+// GET /schedule
+// ===============================
+app.get("/schedule", (req, res) => {
+    db.all(`SELECT * FROM schedule ORDER BY work_date ASC`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// ===============================
+//  預約 API（含不可重複預約規則）
+// ===============================
+app.post("/booking", (req, res) => {
+    const { name, phone, idNumber, birthDate, date, section, doctor } = req.body;
+
+    // 後端把「早/午/晚診」轉換成時間
+    const sectionToTime = {
+        "早診": "08:30–12:00",
+        "午診": "14:30–18:30",
+        "晚診": "18:30–20:00"
+    };
+
+    const time = sectionToTime[section];
+
+    if (!name || !phone || !date || !section || !time) {
+        return res.status(400).json({ error: "必填欄位不足" });
+    }
+
+    // 同一個人 同一天 同時段 不可重複預約
+    const checkSQL = `
+        SELECT * FROM appointments
+        WHERE name = ? AND phone = ? AND date = ? AND section = ?
+    `;
+
+    db.get(checkSQL, [name, phone, date, section], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (row) {
+            return res.json({
+                message: "此人已預約過相同日期與時段",
+                conflict: row
+            });
         }
 
-        return res.json({
-          message: "預約成功！",
-          booking_id: this.lastID,
-          data: { name, phone, id_number, birth, date, section, doctor },
-        });
-      }
-    );
-  });
+        // 寫入預約
+        const insertSQL = `
+            INSERT INTO appointments
+            (name, phone, id_number, birth_date, date, section, time, doctor)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        db.run(
+            insertSQL,
+            [name, phone, idNumber, birthDate, date, section, time, doctor],
+            function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+
+                res.json({
+                    message: "預約成功！",
+                    booking_id: this.lastID,
+                    data: { name, phone, idNumber, birthDate, date, section, time, doctor }
+                });
+            }
+        );
+    });
 });
 
-// 後台查詢全部預約（可加 date 篩選）
-app.get("/appointments", (req, res) => {
-  const { date } = req.query;
-  let sql = "SELECT * FROM appointments";
-  const params = [];
-
-  if (date) {
-    sql += " WHERE date = ?";
-    params.push(date);
-  }
-
-  sql += " ORDER BY date DESC, section ASC, created_at ASC";
-
-  db.all(sql, params, (err, rows) => {
-    if (err) {
-      console.error("查詢預約列表失敗：", err);
-      return res.status(500).json({ error: "伺服器錯誤" });
-    }
-    return res.json(rows);
-  });
-});
-
-// 健康檢查
-app.get("/", (req, res) => {
-  res.send("Clinic booking API v2 is running.");
-});
-
-// Render / 本地啟動
+// ===============================
+//  啟動伺服器（Render 會自動指定 PORT）
+// ===============================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log("後端 API 執行中，port:", PORT);
+    console.log(`伺服器已啟動，PORT: ${PORT}`);
 });

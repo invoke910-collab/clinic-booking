@@ -1,79 +1,88 @@
-// =====================
-// 後台密碼設定（可修改）
-// =====================
-const ADMIN_PASSWORD = "9100";
+const API_URL = "https://clinic-booking-yb4u.onrender.com";
 
-// =====================
-// 後台登入檢查
-// =====================
-function checkLogin() {
-    const pwd = document.getElementById("adminPwd").value;
-    const msg = document.getElementById("loginMsg");
+// 固定班表 & 星期排班
+const schedule = {
+    1: { morning:["吳立偉院長","郭芷毓醫師"], afternoon:["林峻豪副院長"], night:["林峻豪副院長"] },
+    2: { morning:["林峻豪副院長"], afternoon:["郭芷毓醫師"], night:["吳立偉院長","郭芷毓醫師"] },
+    3: { morning:["吳立偉院長","郭芷毓醫師"], afternoon:["黃俞華副院長"], night:["黃俞華副院長"] },
+    4: { morning:["吳立偉院長"], afternoon:["林峻豪副院長"], night:["吳立偉院長"] },
+    5: { morning:["林峻豪副院長","郭芷毓醫師"], afternoon:["郭芷毓醫師"], night:["林峻豪副院長"] },
+    6: {} // 週六依日期
+};
 
-    if (pwd === ADMIN_PASSWORD) {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("adminPanel").style.display = "block";
-        loadData();
+// 週六：固定日期排班
+function getSaturdayDoctor(dateStr){
+    const d = new Date(dateStr);
+    const day = d.getDate();
+
+    if([6,20].includes(day)) return ["劉俊良醫師"];
+    if([13,27].includes(day)) return ["林峻豪副院長"];
+    return [];
+}
+
+document.getElementById("time").addEventListener("change", loadDoctors);
+document.getElementById("date").addEventListener("change", loadDoctors);
+
+function loadDoctors() {
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+    const doctorSelect = document.getElementById("doctor");
+
+    doctorSelect.innerHTML = "<option value=''>請選擇醫師</option>";
+    if(!date || !time) return;
+
+    const weekday = new Date(date).getDay();
+    let doctors = [];
+
+    if(weekday === 6){
+        doctors = getSaturdayDoctor(date);
     } else {
-        msg.innerText = "密碼錯誤！";
+        doctors = schedule[weekday]?.[time] || [];
+    }
+
+    doctors.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        doctorSelect.appendChild(opt);
+    });
+
+    updateSummary();
+}
+
+function updateSummary(){
+    const doctor = document.getElementById("doctor").value;
+    const box = document.getElementById("summary");
+
+    if(doctor){
+        box.innerHTML = `本日門診醫師：<b>${doctor}</b>`;
+    } else {
+        box.innerHTML = "";
     }
 }
 
-// =========================
-// 讀取預約資料（API）
-// =========================
-function loadData() {
-    fetch("https://clinic-booking-yb4u.onrender.com/admin-data")
-        .then(res => res.json())
-        .then(rows => {
-            const tbody = document.querySelector("#dataTable tbody");
-            tbody.innerHTML = "";
+async function submitBooking(){
+    const data = {
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        id_number: document.getElementById("id_number").value,
+        birthday: document.getElementById("birthday").value,
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value,
+        doctor: document.getElementById("doctor").value,
+    };
 
-            rows.forEach(r => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${r.id}</td>
-                    <td>${r.name}</td>
-                    <td>${r.phone}</td>
-                    <td>${r.id_number}</td>
-                    <td>${r.birthday}</td>
-                    <td>${r.date}</td>
-                    <td>${r.time}</td>
-                    <td>${r.doctor}</td>
-                    <td>${r.created_at}</td>
-                    <td><button onclick="deleteRow(${r.id})">刪除</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        });
-}
+    if(Object.values(data).includes("")){
+        alert("所有欄位都是必填！");
+        return;
+    }
 
-// =========================
-// 刪除資料
-// =========================
-function deleteRow(id) {
-    if (!confirm("確定要刪除這筆資料？")) return;
-
-    fetch(`https://clinic-booking-yb4u.onrender.com/admin/delete/${id}`, {
-        method: "DELETE"
-    })
-    .then(res => res.json())
-    .then(data => {
-        loadData();
+    const res = await fetch(API_URL + "/booking", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(data)
     });
-}
 
-// =========================
-// 匯出 Excel（xlsx）
-// =========================
-function exportExcel() {
-    fetch("https://clinic-booking-yb4u.onrender.com/admin-data")
-        .then(res => res.json())
-        .then(rows => {
-            const sheet = XLSX.utils.json_to_sheet(rows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, sheet, "Appointments");
-
-            XLSX.writeFile(wb, "clinic_booking.xlsx");
-        });
+    const result = await res.json();
+    alert(result.message);
 }

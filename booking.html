@@ -182,7 +182,7 @@
 
         const time = sectionToTime(section);
 
-        const res = await fetch("http://localhost:5000/booking", {
+        const res = await fetch("https://clinic-booking-yb4u.onrender.com/booking", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, phone, date, time })
@@ -212,3 +212,4 @@
 
 </body>
 </html>
+

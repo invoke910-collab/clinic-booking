@@ -1,226 +1,207 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>順立骨科診所 - 線上預約後台</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>順立骨科診所後台</title>
 
+<!-- XLSX 套件（不會亂碼） -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
     body {
-      margin: 0;
-      font-family: "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-      background: #f3f6fa;
-      color: #263238;
+        font-family: "Noto Sans TC", sans-serif;
+        background: #f3f7f6;
+        padding: 0;
+        margin: 0;
     }
 
-    .page {
-      max-width: 980px;
-      margin: 20px auto 32px;
-      padding: 0 12px;
+    .login-box, .admin-box {
+        width: 92%;
+        max-width: 480px;
+        background: #fff;
+        margin: 40px auto;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    h1 {
-      font-size: 20px;
-      margin: 0 0 16px;
-      color: #0b8463;
-      text-align: center;
+    h2 {
+        text-align: center;
+        color: #006c5f;
     }
 
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 18px 16px 20px;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-      margin-bottom: 16px;
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd7d3;
     }
 
-    .login-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .login-row input {
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid #cfd8dc;
-      min-width: 150px;
-      font-size: 14px;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.08s;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: #0b8463;
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: #06654a;
-    }
-
-    .btn-secondary {
-      background: #eceff1;
-      color: #37474f;
-    }
-
-    .btn-secondary:hover {
-      background: #dde2e6;
-    }
-
-    .btn-danger {
-      background: #e53935;
-      color: #fff;
-    }
-
-    .btn-danger:hover {
-      background: #c62828;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .toolbar-left,
-    .toolbar-right {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
+    button {
+        width: 100%;
+        padding: 14px;
+        background: #008063;
+        border: none;
+        border-radius: 8px;
+        margin-top: 18px;
+        color: #fff;
+        font-size: 16px;
     }
 
     table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    thead {
-      background: #f1f4f7;
-    }
-
-    th,
-    td {
-      padding: 6px 8px;
-      border: 1px solid #e0e0e0;
-      text-align: left;
-      vertical-align: middle;
-      word-break: break-all;
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 14px;
     }
 
     th {
-      font-weight: 600;
-      color: #455a64;
+        background: #008063;
+        color: #fff;
+        padding: 10px;
     }
 
-    tbody tr:nth-child(even) {
-      background: #fafafa;
+    td {
+        border-bottom: 1px solid #dcdcdc;
+        padding: 6px;
+        text-align: center;
     }
 
-    .status-text {
-      font-size: 13px;
-      color: #757575;
-      margin-top: 4px;
+    .top-btns {
+        display: flex;
+        gap: 10px;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 11px;
-      margin-left: 4px;
-      background: #e8f5e9;
-      color: #2e7d32;
+    .small-btn {
+        flex: 1;
+        padding: 10px;
+        font-size: 14px;
     }
 
-    .hidden {
-      display: none;
-    }
-
-    @media (max-width: 720px) {
-      table {
+    .delete-btn {
+        padding: 4px 10px;
+        background: #c0392b;
+        color: #fff;
+        border-radius: 6px;
         font-size: 12px;
-      }
-      th,
-      td {
-        padding: 5px 6px;
-      }
+        cursor: pointer;
     }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="page">
-    <h1>順立骨科診所 - 線上預約後台</h1>
 
-    <!-- 登入卡片 -->
-    <div id="loginCard" class="card">
-      <div class="login-row">
-        <span>請輸入後台密碼：</span>
-        <input id="passwordInput" type="password" placeholder="請輸入密碼" />
-        <button id="loginBtn" class="btn btn-primary">登入</button>
-      </div>
-      <div class="status-text" id="loginStatus">提示：預設密碼為診所內部設定（目前為 9100）。</div>
+<!-- ================= 登入區塊 ================= -->
+<div id="login" class="login-box">
+    <h2>後台登入</h2>
+    <input id="pwd" type="password" placeholder="請輸入密碼">
+    <button onclick="login()">登入</button>
+</div>
+
+<!-- ================= 後台管理區 ================= -->
+<div id="admin" class="admin-box" style="display:none">
+    <h2>預約管理後台</h2>
+
+    <div class="top-btns">
+        <button class="small-btn" onclick="loadData()">重新整理</button>
+        <button class="small-btn" onclick="exportXLSX()">匯出 Excel</button>
     </div>
 
-    <!-- 後台主畫面 -->
-    <div id="adminCard" class="card hidden">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <button id="refreshBtn" class="btn btn-secondary">重新整理</button>
-          <button id="exportBtn" class="btn btn-primary">匯出 Excel</button>
-        </div>
-        <div class="toolbar-right">
-          <span class="status-text" id="dataStatus">載入中…</span>
-        </div>
-      </div>
-
-      <div style="overflow-x: auto;">
-        <table>
-          <thead>
+    <table>
+        <thead>
             <tr>
-              <th>ID</th>
-              <th>姓名</th>
-              <th>電話</th>
-              <th>身分證 / 護照</th>
-              <th>生日</th>
-              <th>日期</th>
-              <th>時段</th>
-              <th>醫師</th>
-              <th>建立時間</th>
-              <th>操作</th>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>證件</th>
+                <th>生日</th>
+                <th>日期</th>
+                <th>時段</th>
+                <th>醫師</th>
+                <th>刪除</th>
             </tr>
-          </thead>
-          <tbody id="dataBody"></tbody>
-        </table>
-      </div>
-      <div class="status-text">
-        若資料異常，請先按「重新整理」。如要備份，請按「匯出 Excel」。<span class="badge">UTF-8</span>
-      </div>
-    </div>
-  </div>
+        </thead>
+        <tbody id="list"></tbody>
+    </table>
+</div>
 
-  <!-- xlsx 套件（SheetJS） -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="admin.js"></script>
+<script>
+// ============================
+// 後台密碼
+// ============================
+const ADMIN_PWD = "910";   // ★可自行更改
+
+function login() {
+    let v = document.getElementById("pwd").value;
+    if (v === ADMIN_PWD) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("admin").style.display = "block";
+        loadData();
+    } else {
+        alert("密碼錯誤！");
+    }
+}
+
+
+// ============================
+// 取得後端資料
+// ============================
+function loadData() {
+    fetch("https://clinic-booking-yb4u.onrender.com/admin/all")
+        .then(res => res.json())
+        .then(data => {
+            let html = "";
+            data.forEach(row => {
+                html += `
+                    <tr>
+                        <td>${row.name}</td>
+                        <td>${row.phone}</td>
+                        <td>${row.id_number}</td>
+                        <td>${row.birthday}</td>
+                        <td>${row.date}</td>
+                        <td>${row.time}</td>
+                        <td>${row.doctor}</td>
+                        <td><span class="delete-btn" onclick="del(${row.id})">刪除</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById("list").innerHTML = html;
+        });
+}
+
+
+// ============================
+// 刪除資料
+// ============================
+function del(id) {
+    if (!confirm("確定刪除？")) return;
+
+    fetch(`https://clinic-booking-yb4u.onrender.com/admin/delete/${id}`, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(r => {
+        loadData();
+    });
+}
+
+
+// ============================
+// 匯出 XLSX（不亂碼）
+// ============================
+function exportXLSX() {
+    fetch("https://clinic-booking-yb4u.onrender.com/admin/all")
+        .then(res => res.json())
+        .then(data => {
+            let sheet = XLSX.utils.json_to_sheet(data);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, sheet, "預約清單");
+
+            XLSX.writeFile(wb, "clinic_booking.xlsx");
+        });
+}
+</script>
+
 </body>
 </html>

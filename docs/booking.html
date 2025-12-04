@@ -1,66 +1,252 @@
-{
-  "weekly": {
-    "1": {
-      "morning": ["吳立偉院長", "郭芷毓醫師"],
-      "afternoon": ["林峻豪副院長"],
-      "night": ["林峻豪副院長"]
-    },
-    "2": {
-      "morning": ["林峻豪副院長"],
-      "afternoon": ["郭芷毓醫師"],
-      "night": ["吳立偉院長", "郭芷毓醫師"]
-    },
-    "3": {
-      "morning": ["吳立偉院長", "郭芷毓醫師"],
-      "afternoon": ["黃俞華副院長"],
-      "night": ["黃俞華副院長"]
-    },
-    "4": {
-      "morning": ["吳立偉院長"],
-      "afternoon": ["林峻豪副院長"],
-      "night": ["林峻豪副院長"]
-    },
-    "5": {
-      "morning": ["林峻豪副院長"],
-      "afternoon": ["郭芷毓醫師"],
-      "night": ["郭芷毓醫師"]
-    },
-    "6": {
-      "morning": "週六特別班表（依日期）",
-      "afternoon": "週六特別班表（依日期）",
-      "night": []
-    },
-    "0": {
-      "morning": [],
-      "afternoon": [],
-      "night": []
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>順立骨科診所線上預約</title>
+  <style>
+    * {
+      box-sizing: border-box;
     }
-  },
 
-  "special_saturday": {
-    "2025-12-06": {
-      "morning": ["劉俊良醫師"],
-      "afternoon": ["劉俊良醫師"]
-    },
-    "2025-12-13": {
-      "morning": ["林峻豪副院長"],
-      "afternoon": ["林峻豪副院長"]
-    },
-    "2025-12-20": {
-      "morning": ["劉俊良醫師"],
-      "afternoon": ["劉俊良醫師"]
-    },
-    "2025-12-27": {
-      "morning": ["林峻豪副院長"],
-      "afternoon": ["林峻豪副院長"]
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: #e8f5f1;
+      display: flex;
+      justify-content: center;
     }
-  },
 
-  "no_night_dates": [
-    "2025-12-06",
-    "2025-12-13",
-    "2025-12-20",
-    "2025-12-27",
-    "2025-12-25"
-  ]
-}
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px 18px 32px;
+      margin: 24px 12px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: #0b8463;
+      font-size: 20px;
+      margin: 0 0 18px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 4px;
+      font-size: 14px;
+      color: #144b3d;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #cfdad4;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #ffffff;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #0b8463;
+      box-shadow: 0 0 0 2px rgba(11, 132, 99, 0.15);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    .summary-box {
+      margin-top: 10px;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #f1fbf7;
+      color: #0b8463;
+      border: 1px dashed #9bd5c3;
+    }
+
+    .error-text {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #d32f2f;
+      min-height: 18px;
+    }
+
+    button.submit-btn {
+      width: 100%;
+      margin-top: 18px;
+      padding: 12px 0;
+      border-radius: 999px;
+      border: none;
+      background: #008866;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.08s;
+    }
+
+    button.submit-btn:active {
+      transform: translateY(1px);
+    }
+
+    button.submit-btn:hover {
+      background: #007057;
+    }
+
+    .required-tip {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #e53935;
+      text-align: center;
+    }
+
+    /* ✅ 漂亮的彈跳視窗 */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      width: 88%;
+      max-width: 360px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+      padding: 18px 20px 16px;
+      animation: popup-in 0.18s ease-out;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      color: #0b8463;
+      margin-bottom: 10px;
+    }
+
+    .modal-body {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.6;
+      text-align: left; /* ✅ 文字靠左 */
+      margin-bottom: 14px;
+    }
+
+    .modal-body p {
+      margin: 2px 0;
+    }
+
+    .modal-actions {
+      text-align: center;
+    }
+
+    .modal-actions button {
+      min-width: 120px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      border: none;
+      background: #1976d2;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    @keyframes popup-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        margin: 16px 10px;
+        padding: 20px 14px 26px;
+      }
+      h1 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>順立骨科診所線上預約</h1>
+
+    <label for="name">姓名（必填）：</label>
+    <input id="name" type="text" placeholder="請輸入姓名">
+
+    <label for="phone">電話（必填）：</label>
+    <input id="phone" type="tel" placeholder="請輸入行動電話">
+
+    <label for="idNumber">身分證字號 / 護照號碼（必填）：</label>
+    <input id="idNumber" type="text" placeholder="台灣身分證會自動檢驗；外國護照不檢查格式">
+    <div class="hint">台灣身分證會進行格式驗證；外國護照不檢查格式。</div>
+
+    <label for="birthday">出生年月日（必填）：</label>
+    <input id="birthday" type="date">
+
+    <label for="date">預約日期（當日不可預約）：</label>
+    <input id="date" type="date">
+
+    <label for="section">預約時段：</label>
+    <select id="section">
+      <option value="">請選擇時段</option>
+    </select>
+
+    <label for="doctor">醫師：</label>
+    <select id="doctor" disabled>
+      <option value="">請先選擇時段</option>
+    </select>
+
+    <div id="summary" class="summary-box">
+      本日門診醫師：尚未選擇日期與時段
+    </div>
+
+    <div id="err" class="error-text"></div>
+
+    <button id="submitBtn" class="submit-btn">送出預約</button>
+
+    <div class="required-tip">
+      所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）
+    </div>
+  </div>
+
+  <!-- ✅ 彈跳視窗 -->
+  <div id="popupOverlay" class="overlay">
+    <div class="modal-box">
+      <div class="modal-title" id="popupTitle">提示</div>
+      <div class="modal-body" id="popupBody"></div>
+      <div class="modal-actions">
+        <button id="popupCloseBtn">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="booking.js"></script>
+</body>
+</html>

@@ -1,43 +1,79 @@
-const API = "https://clinic-booking-yb4u.onrender.com/admin-data";
-const ADMIN_PASS = "9100";  // 你設定的後台密碼
+// =====================
+// 後台密碼設定（可修改）
+// =====================
+const ADMIN_PASSWORD = "9100";
 
-function login() {
-    let pwd = document.getElementById("password").value;
-    if (pwd === ADMIN_PASS) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("admin").style.display = "block";
+// =====================
+// 後台登入檢查
+// =====================
+function checkLogin() {
+    const pwd = document.getElementById("adminPwd").value;
+    const msg = document.getElementById("loginMsg");
+
+    if (pwd === ADMIN_PASSWORD) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("adminPanel").style.display = "block";
         loadData();
     } else {
-        document.getElementById("loginMsg").innerText = "密碼錯誤！";
+        msg.innerText = "密碼錯誤！";
     }
 }
 
-async function loadData() {
-    const res = await fetch(API);
-    const data = await res.json();
+// =========================
+// 讀取預約資料（API）
+// =========================
+function loadData() {
+    fetch("https://clinic-booking-yb4u.onrender.com/admin-data")
+        .then(res => res.json())
+        .then(rows => {
+            const tbody = document.querySelector("#dataTable tbody");
+            tbody.innerHTML = "";
 
-    let tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = "";
+            rows.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${r.id}</td>
+                    <td>${r.name}</td>
+                    <td>${r.phone}</td>
+                    <td>${r.id_number}</td>
+                    <td>${r.birthday}</td>
+                    <td>${r.date}</td>
+                    <td>${r.time}</td>
+                    <td>${r.doctor}</td>
+                    <td>${r.created_at}</td>
+                    <td><button onclick="deleteRow(${r.id})">刪除</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+}
 
-    data.forEach(row => {
-        let tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.id}</td>
-          <td>${row.name}</td>
-          <td>${row.phone}</td>
-          <td>${row.id_number}</td>
-          <td>${row.birthday}</td>
-          <td>${row.date}</td>
-          <td>${row.time}</td>
-          <td>${row.doctor}</td>
-          <td>${row.created_at}</td>
-        `;
-        tbody.appendChild(tr);
+// =========================
+// 刪除資料
+// =========================
+function deleteRow(id) {
+    if (!confirm("確定要刪除這筆資料？")) return;
+
+    fetch(`https://clinic-booking-yb4u.onrender.com/admin/delete/${id}`, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(data => {
+        loadData();
     });
 }
 
+// =========================
+// 匯出 Excel（xlsx）
+// =========================
 function exportExcel() {
-    let table = document.getElementById("dataTable");
-    let wb = XLSX.utils.table_to_book(table, {sheet:"預約資料"});
-    XLSX.writeFile(wb, "clinic_booking.xlsx");
+    fetch("https://clinic-booking-yb4u.onrender.com/admin-data")
+        .then(res => res.json())
+        .then(rows => {
+            const sheet = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, sheet, "Appointments");
+
+            XLSX.writeFile(wb, "clinic_booking.xlsx");
+        });
 }

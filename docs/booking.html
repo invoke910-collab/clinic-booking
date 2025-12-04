@@ -1,124 +1,118 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>順立骨科診所線上預約</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>順立骨科診所線上預約</title>
 
-    <style>
-        body {
-            font-family: "Noto Sans TC", sans-serif;
-            background: #e8f5f1;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 420px;
-            margin: 20px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        h2 {
-            text-align: center;
-            color: #0b6b57;
-            margin-bottom: 25px;
-            font-size: 22px;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 12px;
-            color: #0b6b57;
-        }
-
-        input, select {
-            width: 100%;
-            height: 45px;
-            font-size: 16px;
-            padding: 6px 10px;
-            margin-top: 6px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-
-        #summary {
-            background: #e3f7f1;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 15px;
-            color: #0b6b57;
-        }
-
-        .error-text {
-            color: red;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 5px;
-        }
-
-        button {
-            width: 100%;
-            height: 50px;
-            background: #0b8c6b;
-            color: white;
-            font-size: 18px;
-            border: none;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background: #0a765a;
-        }
-    </style>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background: #e8f5f1;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 420px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      box-sizing: border-box;
+    }
+    h2 {
+      text-align: center;
+      color: #0b6b57;
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0b6b57;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 15px;
+      border-radius: 8px;
+      border: 1px solid #cccccc;
+      box-sizing: border-box;
+    }
+    #summary {
+      margin-top: 10px;
+      background: #e3f7f1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #0b6b57;
+    }
+    .error-text {
+      margin-top: 8px;
+      color: #d32f2f;
+      font-size: 14px;
+      text-align: center;
+      min-height: 20px;
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      font-size: 17px;
+      border-radius: 8px;
+      border: none;
+      background: #0b8c6b;
+      color: #ffffff;
+    }
+    button:hover {
+      background: #0a7458;
+    }
+  </style>
 </head>
 
 <body>
-<div class="container">
+  <div class="container">
     <h2>順立骨科診所線上預約</h2>
 
     <label>姓名（必填）：</label>
-    <input type="text" id="name">
+    <input type="text" id="name" />
 
     <label>電話（必填）：</label>
-    <input type="text" id="phone">
+    <input type="text" id="phone" />
 
     <label>身分證字號 / 護照號碼（必填）：</label>
-    <input type="text" id="id_number">
+    <input type="text" id="id_number" />
 
     <label>出生年月日（必填）：</label>
-    <input type="date" id="birthday">
+    <input type="date" id="birthday" />
 
     <label>預約日期（當日不可預約）：</label>
-    <input type="date" id="date">
+    <input type="date" id="date" />
 
     <label>預約時段：</label>
     <select id="time">
-        <option value="">請選擇時段</option>
-        <option value="morning">早診（08:00–12:00）</option>
-        <option value="afternoon">午診（14:30–18:00）</option>
-        <option value="night">晚診（18:30–20:00）</option>
+      <option value="">請選擇時段</option>
+      <option value="morning">早診（08:00–12:00）</option>
+      <option value="afternoon">午診（14:30–18:00）</option>
+      <option value="night">晚診（18:30–20:00）</option>
     </select>
 
     <label>醫師：</label>
     <select id="doctor">
-        <option value="">請先選擇時段</option>
+      <option value="">請先選擇時段</option>
     </select>
 
     <div id="summary"></div>
     <p id="err" class="error-text"></p>
 
     <button onclick="submitBooking()">送出預約</button>
+  </div>
 
-</div>
-
-<script src="booking.js"></script>
+  <script src="booking.js"></script>
 </body>
 </html>

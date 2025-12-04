@@ -1,32 +1,53 @@
 // ==============================
-//   後台管理 JS （最新版）
-//   - 支援 XLSX 匯出
-//   - 中文完全不亂碼
-//   - 手機/電腦都能下載
+//   後台管理（最新版）
+//   - 含密碼登入
+//   - 含 XLSX 匯出
 // ==============================
+
+// 設定後台密碼
+const ADMIN_PASSWORD = "9100";
 
 // 後端 API
 const API = "https://clinic-booking-yb4u.onrender.com/admin-data";
 
 let currentData = [];
 
-// 取得全部資料
+// ==============================
+// ► 密碼登入
+// ==============================
+function checkLogin() {
+    const input = document.getElementById("pwd").value;
+
+    if (input === ADMIN_PASSWORD) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("adminPanel").style.display = "block";
+        loadData();
+    } else {
+        document.getElementById("loginErr").innerText = "密碼錯誤！";
+    }
+}
+
+// ==============================
+// ► 後端取得全部資料
+// ==============================
 async function loadData() {
     try {
         const res = await fetch(API);
         currentData = await res.json();
         renderTable();
     } catch (e) {
-        alert("無法取得資料，請稍後再試");
+        alert("資料讀取失敗，請稍後再試");
     }
 }
 
-// 渲染表格
+// ==============================
+// ► 渲染表格
+// ==============================
 function renderTable() {
     const tbody = document.getElementById("tbody");
     tbody.innerHTML = "";
 
-    currentData.forEach((r) => {
+    currentData.forEach(r => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${r.id}</td>
@@ -43,7 +64,6 @@ function renderTable() {
     });
 }
 
-// 時段顯示中文
 function timeToLabel(t) {
     if (t === "morning") return "早診（08:00–12:00）";
     if (t === "afternoon") return "午診（14:30–18:00）";
@@ -52,7 +72,7 @@ function timeToLabel(t) {
 }
 
 // ==============================
-//   匯出 XLSX（Excel 專用格式）
+// ► 匯出 Excel (.xlsx)
 // ==============================
 function exportXLSX() {
     if (!currentData.length) {
@@ -84,8 +104,3 @@ function exportXLSX() {
 
     XLSX.writeFile(wb, "clinic_booking.xlsx");
 }
-
-// ==============================
-//   初始化
-// ==============================
-loadData();

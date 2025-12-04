@@ -1,166 +1,66 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>順立骨科診所線上預約</title>
-
-<style>
-    body {
-        background: #e8f5f1;
-        margin: 0;
-        padding: 0;
-        font-family: "Noto Sans TC", sans-serif;
+{
+  "weekly": {
+    "1": {
+      "morning": ["吳立偉院長", "郭芷毓醫師"],
+      "afternoon": ["林峻豪副院長"],
+      "night": ["林峻豪副院長"]
+    },
+    "2": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["郭芷毓醫師"],
+      "night": ["吳立偉院長", "郭芷毓醫師"]
+    },
+    "3": {
+      "morning": ["吳立偉院長", "郭芷毓醫師"],
+      "afternoon": ["黃俞華副院長"],
+      "night": ["黃俞華副院長"]
+    },
+    "4": {
+      "morning": ["吳立偉院長"],
+      "afternoon": ["林峻豪副院長"],
+      "night": ["林峻豪副院長"]
+    },
+    "5": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["郭芷毓醫師"],
+      "night": ["郭芷毓醫師"]
+    },
+    "6": {
+      "morning": "週六特別班表（依日期）",
+      "afternoon": "週六特別班表（依日期）",
+      "night": []
+    },
+    "0": {
+      "morning": [],
+      "afternoon": [],
+      "night": []
     }
+  },
 
-    .container {
-        max-width: 420px;
-        margin: 25px auto;
-        background: white;
-        padding: 25px;
-        border-radius: 18px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  "special_saturday": {
+    "2025-12-06": {
+      "morning": ["劉俊良醫師"],
+      "afternoon": ["劉俊良醫師"]
+    },
+    "2025-12-13": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["林峻豪副院長"]
+    },
+    "2025-12-20": {
+      "morning": ["劉俊良醫師"],
+      "afternoon": ["劉俊良醫師"]
+    },
+    "2025-12-27": {
+      "morning": ["林峻豪副院長"],
+      "afternoon": ["林峻豪副院長"]
     }
+  },
 
-    h2 {
-        text-align: center;
-        color: #045c54;
-        margin-bottom: 25px;
-    }
-
-    label {
-        font-weight: bold;
-        color: #045c54;
-        margin-top: 15px;
-        display: block;
-    }
-
-    input, select {
-        width: 100%;
-        padding: 12px;
-        margin-top: 6px;
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        font-size: 15px;
-    }
-
-    button {
-        width: 100%;
-        margin-top: 20px;
-        padding: 15px;
-        background: #00897b;
-        color: white;
-        border: none;
-        border-radius: 40px;
-        font-size: 18px;
-        letter-spacing: 1px;
-    }
-
-    .today-doctor {
-        background: #f0faf9;
-        padding: 12px;
-        margin-top: 12px;
-        border-radius: 10px;
-        font-size: 14px;
-        color: #026b62;
-    }
-
-    .error-text {
-        color: red;
-        margin-top: 10px;
-        text-align: left;
-    }
-
-    /* popup 美化 */
-    #popupBox {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.45);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-    }
-
-    #popupCard {
-        background: white;
-        width: 90%;
-        max-width: 380px;
-        padding: 25px;
-        border-radius: 18px;
-        text-align: left;
-        line-height: 1.8;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        font-size: 17px;
-    }
-
-    #popupCard h3 {
-        text-align: center;
-        margin-top: 0;
-        margin-bottom: 18px;
-    }
-
-    #popupCard button {
-        width: 100%;
-        padding: 12px;
-        margin-top: 15px;
-        border-radius: 30px;
-        background: #007bff;
-        color: white;
-        border: none;
-        font-size: 16px;
-    }
-</style>
-</head>
-
-<body>
-<div class="container">
-    <h2>順立骨科診所線上預約</h2>
-
-    <label>姓名（必填）：</label>
-    <input type="text" id="name">
-
-    <label>電話（必填）：</label>
-    <input type="tel" id="phone">
-
-    <label>身分證字號 / 護照號碼（必填）：</label>
-    <input type="text" id="id_number">
-
-    <label>出生年月日（必填）：</label>
-    <input type="date" id="birthday">
-
-    <label>預約日期（當日不可預約）：</label>
-    <input type="date" id="date">
-
-    <label>預約時段：</label>
-    <select id="time">
-        <option value="">請選擇時段</option>
-        <option value="morning">早診（08:00–12:00）</option>
-        <option value="afternoon">午診（14:30–18:00）</option>
-        <option value="night">晚診（18:30–20:00）</option>
-    </select>
-
-    <label>醫師：</label>
-    <select id="doctor">
-        <option value="">請先選擇時段</option>
-    </select>
-
-    <div id="todayDoctor" class="today-doctor"></div>
-
-    <p id="err" class="error-text"></p>
-
-    <button onclick="submitBooking()">送出預約</button>
-</div>
-
-<!-- popup -->
-<div id="popupBox">
-    <div id="popupCard">
-        <h3>預約成功！</h3>
-        <div id="popupContent"></div>
-        <button onclick="closePopup()">確定</button>
-    </div>
-</div>
-
-<script src="booking.js"></script>
-</body>
-</html>
+  "no_night_dates": [
+    "2025-12-06",
+    "2025-12-13",
+    "2025-12-20",
+    "2025-12-27",
+    "2025-12-25"
+  ]
+}

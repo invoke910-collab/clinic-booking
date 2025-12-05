@@ -11,7 +11,6 @@
         background: #eaf5f1;
         margin: 0;
     }
-
     .container {
         max-width: 420px;
         width: 92%;
@@ -20,24 +19,19 @@
         padding: 22px 20px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        box-sizing: border-box;
     }
-
     h2 {
         text-align: center;
         color: #006c5f;
         margin-bottom: 25px;
         font-size: 22px;
     }
-
     label {
         font-weight: bold;
         margin-top: 15px;
         color: #003c36;
         display: block;
-        font-size: 15px;
     }
-
     input, select {
         width: 100%;
         padding: 10px;
@@ -45,15 +39,7 @@
         font-size: 15px;
         border: 1px solid #bccac7;
         border-radius: 6px;
-        box-sizing: border-box;
-
-        /* 防止外溢關鍵設定 */
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
-
     button {
         width: 100%;
         background: #008063;
@@ -65,7 +51,6 @@
         border: none;
         cursor: pointer;
     }
-
     .note {
         font-size: 12px;
         text-align: center;
@@ -76,14 +61,12 @@
     /* Popup */
     #popupBg {
         position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
+        inset: 0;
         background: rgba(0,0,0,0.45);
         display: none;
         justify-content: center;
         align-items: center;
     }
-
     #popupBox {
         background: #fff;
         width: 86%;
@@ -94,13 +77,11 @@
         text-align: left;
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
-
     #popupBox h3 {
         text-align: center;
         margin-bottom: 12px;
         font-size: 20px;
     }
-
     .popup-btn {
         width: 120px;
         margin: 18px auto 0;
@@ -136,12 +117,12 @@
 
     <label>預約時段：</label>
     <select id="section">
-        <option value="">選日期</option>
+        <option value="">請先選擇日期</option>
     </select>
 
     <label>醫師：</label>
     <select id="doctor">
-        <option value="">選時段</option>
+        <option value="">請先選擇時段</option>
     </select>
 
     <button onclick="submitBooking()">送出預約</button>
@@ -159,6 +140,5 @@
 </div>
 
 <script src="booking.js"></script>
-
 </body>
 </html>

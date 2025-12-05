@@ -3,99 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>順立骨科診所後台</title>
+<title>順立骨科診所後台管理</title>
 
-<!-- XLSX 匯出 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
     body {
-        font-family: "Noto Sans TC", sans-serif;
         background: #eef3f2;
         margin: 0;
+        font-family: "Noto Sans TC", sans-serif;
     }
+
     #loginBox {
-        max-width: 380px;
-        margin: 120px auto;
-        background: #fff;
-        padding: 25px;
-        text-align: center;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    input {
         width: 90%;
-        padding: 10px;
-        font-size: 16px;
-        margin-top: 10px;
+        max-width: 360px;
+        margin: 100px auto;
+        padding: 25px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        text-align: center;
     }
-    button {
-        padding: 10px 18px;
+
+    #loginBox input {
+        width: 100%;
+        padding: 12px;
         margin-top: 15px;
-        font-size: 16px;
-        background: #007768;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+    #loginBox button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background: #008063;
         color: white;
+        border: none;
+        border-radius: 8px;
+    }
+
+    #adminPanel {
+        display: none;
+        width: 96%;
+        max-width: 980px;
+        margin: 20px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-sizing: border-box;
+    }
+
+    .btnRow {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .btnRow button {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px;
+        background: #008063;
+        color: #fff;
         border: none;
         border-radius: 8px;
         cursor: pointer;
     }
-    #adminPanel {
-        display: none;
-        padding: 20px;
-        max-width: 900px;
-        margin: auto;
-    }
+
     table {
         width: 100%;
-        margin-top: 20px;
         border-collapse: collapse;
-    }
-    th, td {
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-        text-align: center;
+        font-size: 13px;
     }
     th {
-        background: #009981;
+        background: #006c5f;
         color: white;
+        padding: 8px;
+        text-align: left;
     }
+    td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+        word-break: break-all;
+    }
+
     .delBtn {
         background: #cc3333;
-        color: white;
-        padding: 6px 14px;
+        color: #fff;
+        border: none;
+        padding: 6px 10px;
         border-radius: 6px;
         cursor: pointer;
-        border: none;
+        font-size: 12px;
     }
 </style>
 </head>
 
 <body>
 
-<!-- 登入區 -->
 <div id="loginBox">
     <h2>後台登入</h2>
     <input id="pwd" type="password" placeholder="請輸入後台密碼">
     <button onclick="login()">登入</button>
 </div>
 
-<!-- 後台管理 -->
 <div id="adminPanel">
-    <button id="refreshBtn">重新整理</button>
-    <button id="exportBtn">匯出 Excel</button>
+    <h2>預約管理</h2>
+    <div class="btnRow">
+        <button id="refreshBtn">重新整理</button>
+        <button id="exportBtn">匯出 Excel</button>
+    </div>
 
     <table id="dataTable">
         <thead>
             <tr>
-                <th>ID</th><th>姓名</th><th>電話</th><th>證件</th>
-                <th>生日</th><th>日期</th><th>時段</th><th>醫師</th><th>建立時間</th><th>刪除</th>
+                <th>ID</th>
+                <th>姓名</th>
+                <th>電話</th>
+                <th>證件</th>
+                <th>生日</th>
+                <th>日期</th>
+                <th>時段</th>
+                <th>醫師</th>
+                <th>建立時間</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody id="tbody"></tbody>
     </table>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin.js"></script>
+
 </body>
 </html>

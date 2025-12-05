@@ -1,150 +1,119 @@
-const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
+// =============================================
+// Supabase 設定（使用新版 supabase-js v2）
+// =============================================
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { createClient } 
-  from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
+const SUPABASE_KEY = "sb-publishable-3C11H2..................................fIPR";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// =============================================
+// 1. 日期不可選今天以前
+// =============================================
+const dateInput = document.getElementById("date");
+const today = new Date().toISOString().split("T")[0];
+dateInput.min = today;
 
-// ===== 3. 載入排班設定（schedule.json） =====
-let scheduleData = null;
-
+// =============================================
+// 2. 動態載入班表
+// =============================================
 async function loadSchedule() {
     const res = await fetch("schedule.json");
-    scheduleData = await res.json();
+    return await res.json();
 }
 
-loadSchedule();
+let SCHEDULE = null;
 
-// ===== 4. 日期相關：限制今日以前不可選 =====
-const dateInput = document.getElementById("date");
-(function setMinDate() {
-    const today = new Date();
-    // 今日不可預約→ 最小日 = 明天
-    today.setDate(today.getDate() + 1);
-    const min = today.toISOString().split("T")[0];
-    dateInput.min = min;
-})();
+// =============================================
+// 3. 日期改變 → 更新時段 → 更新醫師
+// =============================================
+document.getElementById("date").addEventListener("change", async function () {
+    if (!SCHEDULE) SCHEDULE = await loadSchedule();
+    const chosenDate = this.value;
 
-// ===== 5. 依日期顯示時段選單 =====
-const sectionSelect = document.getElementById("section");
-const doctorSelect = document.getElementById("doctor");
+    const weekday = new Date(chosenDate).getDay(); // 0~6
 
-dateInput.addEventListener("change", onDateChange);
-sectionSelect.addEventListener("change", onSectionChange);
+    const sectionSelect = document.getElementById("section");
+    const doctorSelect = document.getElementById("doctor");
 
-function clearSelectOptions(selectEl, placeholder) {
-    selectEl.innerHTML = "";
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = placeholder;
-    selectEl.appendChild(opt);
-}
-
-function onDateChange() {
-    clearSelectOptions(sectionSelect, "請選擇時段");
-    clearSelectOptions(doctorSelect, "請先選擇時段");
-
-    const value = dateInput.value; // yyyy-mm-dd
-    if (!value || !scheduleData) return;
-
-    const d = new Date(value + "T00:00:00");
-    const weekDay = d.getDay(); // 0: Sun ~ 6: Sat
+    sectionSelect.innerHTML = `<option value="">請選擇時段</option>`;
+    doctorSelect.innerHTML = `<option value="">請先選擇時段</option>`;
 
     // 星期日休診
-    if (weekDay === 0) {
-        clearSelectOptions(sectionSelect, "星期日休診，請選擇其他日期");
-        sectionSelect.disabled = true;
-        doctorSelect.disabled = true;
+    if (weekday === 0) {
+        alert("星期日休診，無法預約。");
         return;
     }
 
-    sectionSelect.disabled = false;
-    doctorSelect.disabled = false;
+    // ====== 星期六特殊輪值 ======
+    if (weekday === 6) {
+        const sat = SCHEDULE.saturday;
 
-    // 平日 (1~5)
-    if (weekDay >= 1 && weekDay <= 5) {
-        const times = [
-            { value: "morning", label: "早診（08:00–12:00）" },
-            { value: "afternoon", label: "午診（14:30–18:00）" },
-            { value: "night", label: "晚診（18:30–20:00）" }
-        ];
-        clearSelectOptions(sectionSelect, "請選擇時段");
-        times.forEach(t => {
+        // 取出該日是哪位醫師
+        const match = sat.cycle.find(x => x.date === chosenDate);
+        if (!match) {
+            alert("此週六沒有門診。");
+            return;
+        }
+
+        // 載入可預約時段
+        Object.keys(sat.sections).forEach(sec => {
+            const displayName = sat.sections[sec];
             const opt = document.createElement("option");
-            opt.value = t.value;
-            opt.textContent = t.label;
+            opt.value = sec;
+            opt.textContent = displayName;
             sectionSelect.appendChild(opt);
         });
-        return;
-    }
 
-    // 星期六：依照 schedule.json 的 cycle
-    if (weekDay === 6) {
-        clearSelectOptions(sectionSelect, "請選擇時段");
-
-        const satConfig = scheduleData.saturday;
-        // 週六只有早診 & 午診
-        const satSections = satConfig.sections;
-        Object.entries(satSections).forEach(([key, label]) => {
+        // 當使用者選擇時段後更新醫師
+        sectionSelect.addEventListener("change", function () {
+            doctorSelect.innerHTML = "";
             const opt = document.createElement("option");
-            opt.value = key;   // morning / afternoon
-            opt.textContent = label;
-            sectionSelect.appendChild(opt);
+            opt.value = match.doctor;
+            opt.textContent = match.doctor;
+            doctorSelect.appendChild(opt);
         });
-    }
-}
 
-// ===== 6. 依時段顯示醫師選單 =====
-function onSectionChange() {
-    clearSelectOptions(doctorSelect, "請選擇醫師");
-
-    const dateVal = dateInput.value;
-    const secVal = sectionSelect.value;
-    if (!dateVal || !secVal || !scheduleData) return;
-
-    const d = new Date(dateVal + "T00:00:00");
-    const weekDay = d.getDay();
-
-    let doctors = [];
-
-    if (weekDay >= 1 && weekDay <= 5) {
-        // 平日
-        const dayCfg = scheduleData.weekday[String(weekDay)];
-        if (dayCfg && dayCfg[secVal]) {
-            doctors = dayCfg[secVal];
-        }
-    } else if (weekDay === 6) {
-        // 星期六：看 cycle
-        const satCfg = scheduleData.saturday;
-        const cycle = satCfg.cycle;
-        const target = cycle.find(c => c.date === dateVal);
-        if (target && secVal === "morning") {
-            // 週六早診：依 cycle 的 doctor
-            doctors = [target.doctor];
-        } else if (target && secVal === "afternoon") {
-            // 週六午診：固定「劉俊良 醫師」
-            doctors = ["劉俊良 醫師"];
-        }
-    }
-
-    if (doctors.length === 0) {
-        clearSelectOptions(doctorSelect, "本時段無門診，請改選其他時段");
-        doctorSelect.disabled = true;
         return;
     }
 
-    doctorSelect.disabled = false;
-    doctors.forEach(name => {
+    // ====== 一般平日班表 ======
+    const day = weekday; // 1=一 ... 5=五
+    const daySchedule = SCHEDULE.weekday[day];
+
+    Object.keys(daySchedule).forEach(sec => {
+        let display = "";
+        if (sec === "morning") display = "早診（08:00–12:00）";
+        if (sec === "afternoon") display = "午診（14:30–18:00）";
+        if (sec === "night") display = "晚診（18:00–20:00）";
+
         const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        doctorSelect.appendChild(opt);
+        opt.value = sec;
+        opt.textContent = display;
+        sectionSelect.appendChild(opt);
     });
-}
 
-// ===== 7. 送出預約 =====
+    // 時段選擇 → 產生醫師名單
+    sectionSelect.addEventListener("change", function () {
+        doctorSelect.innerHTML = `<option value="">請選擇醫師</option>`;
+        const sec = this.value;
+
+        if (!sec) return;
+
+        daySchedule[sec].forEach(doc => {
+            const opt = document.createElement("option");
+            opt.value = doc;
+            opt.textContent = doc;
+            doctorSelect.appendChild(opt);
+        });
+    });
+});
+
+
+// =============================================
+// 4. 送出預約
+// =============================================
 async function submitBooking() {
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
@@ -155,87 +124,76 @@ async function submitBooking() {
     const doctor = document.getElementById("doctor").value;
 
     if (!name || !phone || !id_number || !birthday || !date || !timeKey || !doctor) {
-        alert("所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）");
+        alert("請完整填寫所有欄位！");
         return;
     }
 
-    // 顯示中文時段文字
-    let timeText = "";
-    if (timeKey === "morning") timeText = "早診（08:00–12:00）";
-    else if (timeKey === "afternoon") timeText = "午診（14:30–18:00）";
-    else if (timeKey === "night") timeText = "晚診（18:30–20:00）";
+    // 取得顯示時段名稱（用於顯示）
+    let timeDisplay = "";
+    if (timeKey === "morning") timeDisplay = "早診（08:00–12:00）";
+    if (timeKey === "afternoon") timeDisplay = "午診（14:30–18:00）";
+    if (timeKey === "night") timeDisplay = "晚診（18:00–20:00）";
 
-    try {
-        // 1) 檢查是否已重複預約
-        const { data: dupList, error: dupErr } = await supabase
-            .from("appointments")
-            .select("id")
-            .eq("name", name)
-            .eq("phone", phone)
-            .eq("date", date)
-            .eq("time", timeText)
-            .eq("doctor", doctor)
-            .limit(1);
+    // === 1. 檢查是否重複預約 ===
+    const { data: existing, error: checkError } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("name", name)
+        .eq("phone", phone)
+        .eq("date", date)
+        .eq("time", timeDisplay)
+        .eq("doctor", doctor);
 
-        if (dupErr) {
-            console.error(dupErr);
-            alert("檢查重複預約時發生錯誤，請稍後再試");
-            return;
-        }
-
-        if (dupList && dupList.length > 0) {
-            alert("您已預約過同一日期、同一時段與同一位醫師，無法重複預約。");
-            return;
-        }
-
-        // 2) 寫入資料
-        const { error: insertErr } = await supabase.from("appointments").insert([{
-            name,
-            phone,
-            id_number,
-            birthday,
-            date,
-            time: timeText,
-            doctor
-        }]);
-
-        if (insertErr) {
-            console.error(insertErr);
-            alert("預約寫入失敗，請稍後再試");
-            return;
-        }
-
-        // 3) 顯示漂亮 popup
-        const popupBg = document.getElementById("popupBg");
-        const popupContent = document.getElementById("popupContent");
-        popupContent.innerHTML = `
-            <p>姓名：${name}</p>
-            <p>日期：${date}</p>
-            <p>時段：${timeText}</p>
-            <p>醫師：${doctor}</p>
-        `;
-        popupBg.style.display = "flex";
-
-    } catch (e) {
-        console.error(e);
-        alert("預約過程發生錯誤，請稍後再試");
+    if (checkError) {
+        alert("檢查重複預約時發生錯誤，請稍後再試");
+        return;
     }
-}
 
-// popup 關閉 & 清空表單
-function closePopup() {
-    document.getElementById("popupBg").style.display = "none";
+    if (existing.length > 0) {
+        alert("您已預約過相同日期、時段、醫師，不能重複預約！");
+        return;
+    }
 
+    // === 2. 寫入資料 ===
+    const { error: insertError } = await supabase
+        .from("appointments")
+        .insert([
+            {
+                name,
+                phone,
+                id_number,
+                birthday,
+                date,
+                time: timeDisplay,
+                doctor,
+            }
+        ]);
+
+    if (insertError) {
+        alert("寫入預約資料時發生錯誤，請稍後再試");
+        return;
+    }
+
+    // === 3. 顯示成功 popup（你的 booking.html 已有 popup 樣式） ===
+    document.getElementById("popupContent").innerHTML = `
+        姓名：${name}<br>
+        日期：${date}<br>
+        時段：${timeDisplay}<br>
+        醫師：${doctor}
+    `;
+    document.getElementById("popupBg").style.display = "flex";
+
+    // 清空表單
     document.getElementById("name").value = "";
     document.getElementById("phone").value = "";
     document.getElementById("id_number").value = "";
     document.getElementById("birthday").value = "";
     document.getElementById("date").value = "";
-    clearSelectOptions(sectionSelect, "請先選擇日期");
-    clearSelectOptions(doctorSelect, "請先選擇時段");
-    sectionSelect.disabled = true;
-    doctorSelect.disabled = true;
+    document.getElementById("section").innerHTML = `<option value="">請先選擇日期</option>`;
+    document.getElementById("doctor").innerHTML = `<option value="">請先選擇時段</option>`;
 }
-window.closePopup = closePopup;
-window.submitBooking = submitBooking;
 
+window.submitBooking = submitBooking;
+window.closePopup = () => {
+    document.getElementById("popupBg").style.display = "none";
+};

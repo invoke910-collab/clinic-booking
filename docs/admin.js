@@ -1,129 +1,97 @@
-// =========================================
-// 順立骨科診所預約 API（最終正式版）
-// =========================================
+// ===============================
+// 後台密碼（可自行更改）
+// ===============================
+const ADMIN_PASSWORD = "9100";
 
-const express = require("express");
-const cors = require("cors");
-const sqlite3 = require("sqlite3").verbose();
+// ===============================
+// 後台登入
+// ===============================
+function loginAdmin() {
+    const inputPwd = document.getElementById("adminPassword").value;
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+    if (inputPwd === ADMIN_PASSWORD) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("adminBox").style.display = "block";
+        loadData();
+    } else {
+        alert("密碼錯誤！");
+    }
+}
 
-// =========================================
-// 連線 SQLite
-// =========================================
-const db = new sqlite3.Database("./clinic.db", (err) => {
-  if (err) console.error(err.message);
-  else console.log("已連線 SQLite 資料庫 clinic.db");
-});
+// ===============================
+// 從 API 載入資料
+// ===============================
+async function loadData() {
+    const apiURL = "https://clinic-booking-yb4u.onrender.com/admin-data";
 
-// =========================================
-// 建立資料表（不存在才建立）
-// =========================================
-db.run(`
-  CREATE TABLE IF NOT EXISTS appointments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      phone TEXT NOT NULL,
-      id_number TEXT NOT NULL,
-      birthday TEXT NOT NULL,
-      date TEXT NOT NULL,
-      time TEXT NOT NULL,
-      doctor TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+    try {
+        const res = await fetch(apiURL);
+        const data = await res.json();
+        renderTable(data);
+    } catch (err) {
+        alert("讀取資料時發生錯誤");
+        console.error(err);
+    }
+}
 
+// ===============================
+// 表格渲染
+// ===============================
+function renderTable(rows) {
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
 
-// =========================================
-// 🔥 後台：取得所有預約資料
-// =========================================
-app.get("/admin/all", (req, res) => {
-  db.all("SELECT * FROM appointments ORDER BY created_at DESC", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: "DB read error" });
-    res.json(rows);
-  });
-});
+    rows.forEach(item => {
+        const tr = document.createElement("tr");
 
-// =========================================
-// 🔥 後台：刪除單筆紀錄
-// =========================================
-app.delete("/admin/delete/:id", (req, res) => {
-  const id = req.params.id;
-  db.run("DELETE FROM appointments WHERE id = ?", [id], function (err) {
-    if (err) return res.status(500).json({ error: "Delete failed" });
-    res.json({ success: true });
-  });
-});
+        tr.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.name}</td>
+            <td>${item.phone}</td>
+            <td>${item.id_number}</td>
+            <td>${item.birthday}</td>
+            <td>${item.date}</td>
+            <td>${translateTime(item.time)}</td>
+            <td>${item.doctor}</td>
+            <td>${item.created_at}</td>
+        `;
 
-
-// =========================================
-// 🔥 前台：新增預約（正式版）
-// =========================================
-app.post("/booking", (req, res) => {
-  const { name, phone, id_number, birthday, date, time, doctor } = req.body;
-
-  // 1️⃣ 必填欄位檢查
-  if (!name || !phone || !id_number || !birthday || !date || !time || !doctor) {
-    return res.status(400).json({
-      error: "所有欄位都是必填（姓名、電話、身分證、生日、日期、時段、醫師）"
+        tbody.appendChild(tr);
     });
-  }
+}
 
-  // 2️⃣ 禁止同一人預約同一天同時段
-  const checkSQL = `
-    SELECT * FROM appointments
-    WHERE name = ? AND phone = ? AND date = ? AND time = ?
-  `;
+// ===============================
+// 時段翻譯
+// ===============================
+function translateTime(t) {
+    const map = {
+        "morning": "早診（08:00–12:00）",
+        "afternoon": "午診（14:30–18:00）",
+        "night": "晚診（18:00–20:00）"
+    };
+    return map[t] || t;
+}
 
-  db.get(checkSQL, [name, phone, date, time], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: "資料庫錯誤：" + err.message });
-    }
+// ===============================
+// 匯出 Excel（XLSX 格式不亂碼）
+// ===============================
+function exportExcel() {
+    const table = document.getElementById("dataTable");
 
-    if (row) {
-      return res.json({
-        message: "您已預約過此日期與時段，不可重複預約。",
-        conflict: row
-      });
-    }
+    // 將 HTML table 轉為 sheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(table);
 
-    // 3️⃣ 新增預約
-    const insertSQL = `
-      INSERT INTO appointments 
-      (name, phone, id_number, birthday, date, time, doctor)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+    XLSX.utils.book_append_sheet(wb, ws, "預約紀錄");
 
-    db.run(
-      insertSQL,
-      [name, phone, id_number, birthday, date, time, doctor],
-      function (err) {
-        if (err) return res.status(500).json({ error: "寫入失敗：" + err.message });
+    const filename = "clinic-booking.xlsx";
 
-        res.json({
-          message: "預約成功！",
-          booking_id: this.lastID,
-          data: { name, phone, id_number, birthday, date, time, doctor }
-        });
-      }
-    );
-  });
-});
+    XLSX.writeFile(wb, filename);
+}
 
-
-// =========================================
-// API 測試首頁
-// =========================================
-app.get("/", (req, res) => {
-  res.send("Clinic booking API is running.");
-});
-
-// =========================================
-// Render 用固定 PORT
-// =========================================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`API 已啟動於 Port ${PORT}`);
-});
+// ===============================
+// 重新整理按鈕
+// ===============================
+function refreshData() {
+    loadData();
+}

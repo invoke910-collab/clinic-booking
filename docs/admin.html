@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>順立骨科診所後台</title>
 
-<!-- XLSX 套件（不會亂碼） -->
+<!-- XLSX 套件：匯出成 .xlsx 不會亂碼 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -21,7 +21,7 @@
         max-width: 480px;
         background: #fff;
         margin: 40px auto;
-        padding: 25px;
+        padding: 25px 20px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
@@ -29,6 +29,8 @@
     h2 {
         text-align: center;
         color: #006c5f;
+        margin-top: 0;
+        margin-bottom: 18px;
     }
 
     input {
@@ -37,6 +39,7 @@
         margin-top: 12px;
         border-radius: 8px;
         border: 1px solid #cbd7d3;
+        font-size: 14px;
     }
 
     button {
@@ -48,30 +51,13 @@
         margin-top: 18px;
         color: #fff;
         font-size: 16px;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-        font-size: 14px;
-    }
-
-    th {
-        background: #008063;
-        color: #fff;
-        padding: 10px;
-    }
-
-    td {
-        border-bottom: 1px solid #dcdcdc;
-        padding: 6px;
-        text-align: center;
+        cursor: pointer;
     }
 
     .top-btns {
         display: flex;
         gap: 10px;
+        margin-bottom: 8px;
     }
 
     .small-btn {
@@ -80,20 +66,48 @@
         font-size: 14px;
     }
 
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    th {
+        background: #008063;
+        color: #fff;
+        padding: 8px 4px;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    td {
+        border-bottom: 1px solid #dcdcdc;
+        padding: 6px 4px;
+        text-align: left; /* 預設靠左 */
+        word-break: break-all;
+    }
+
+    td.ta-center {
+        text-align: center;
+    }
+
     .delete-btn {
         padding: 4px 10px;
         background: #c0392b;
         color: #fff;
         border-radius: 6px;
-        font-size: 12px;
+        font-size: 11px;
         cursor: pointer;
+        display: inline-block;
     }
 </style>
 </head>
 
 <body>
 
-<!-- ================= 登入區塊 ================= -->
+<!-- ================= 登入區 ================= -->
 <div id="login" class="login-box">
     <h2>後台登入</h2>
     <input id="pwd" type="password" placeholder="請輸入密碼">
@@ -128,12 +142,18 @@
 
 <script>
 // ============================
-// 後台密碼
+// 後台密碼（可自行修改）
 // ============================
-const ADMIN_PWD = "910";   // ★可自行更改
+const ADMIN_PWD = "910";
 
+// 後端 API 基底網址
+const API_BASE = "https://clinic-booking-yb4u.onrender.com";
+
+// ============================
+// 登入
+// ============================
 function login() {
-    let v = document.getElementById("pwd").value;
+    let v = document.getElementById("pwd").value.trim();
     if (v === ADMIN_PWD) {
         document.getElementById("login").style.display = "none";
         document.getElementById("admin").style.display = "block";
@@ -143,62 +163,77 @@ function login() {
     }
 }
 
-
 // ============================
-// 取得後端資料
+// 載入資料
 // ============================
 function loadData() {
-    fetch("https://clinic-booking-yb4u.onrender.com/admin/all")
+    fetch(API_BASE + "/admin/all")
         .then(res => res.json())
         .then(data => {
             let html = "";
             data.forEach(row => {
                 html += `
                     <tr>
-                        <td>${row.name}</td>
-                        <td>${row.phone}</td>
-                        <td>${row.id_number}</td>
-                        <td>${row.birthday}</td>
-                        <td>${row.date}</td>
-                        <td>${row.time}</td>
-                        <td>${row.doctor}</td>
-                        <td><span class="delete-btn" onclick="del(${row.id})">刪除</span></td>
+                        <td>${row.name || ""}</td>
+                        <td>${row.phone || ""}</td>
+                        <td>${row.id_number || ""}</td>
+                        <td>${row.birthday || ""}</td>
+                        <td>${row.date || ""}</td>
+                        <td>${row.time || ""}</td>
+                        <td>${row.doctor || ""}</td>
+                        <td class="ta-center">
+                            <span class="delete-btn" onclick="del(${row.id})">刪除</span>
+                        </td>
                     </tr>
                 `;
             });
             document.getElementById("list").innerHTML = html;
+        })
+        .catch(() => {
+            alert("讀取資料失敗，請稍後再試。");
         });
 }
-
 
 // ============================
 // 刪除資料
 // ============================
 function del(id) {
-    if (!confirm("確定刪除？")) return;
+    if (!confirm("確定要刪除此筆預約？")) return;
 
-    fetch(`https://clinic-booking-yb4u.onrender.com/admin/delete/${id}`, {
+    fetch(API_BASE + "/admin/delete/" + id, {
         method: "DELETE"
     })
     .then(res => res.json())
     .then(r => {
         loadData();
+    })
+    .catch(() => {
+        alert("刪除失敗，請稍後再試。");
     });
 }
 
-
 // ============================
-// 匯出 XLSX（不亂碼）
+// 匯出 Excel (.xlsx)
 // ============================
 function exportXLSX() {
-    fetch("https://clinic-booking-yb4u.onrender.com/admin/all")
+    fetch(API_BASE + "/admin/all")
         .then(res => res.json())
         .then(data => {
+            if (!data || data.length === 0) {
+                alert("目前沒有資料可匯出。");
+                return;
+            }
+
+            // 轉成 worksheet
             let sheet = XLSX.utils.json_to_sheet(data);
             let wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, sheet, "預約清單");
 
+            // 下載檔案
             XLSX.writeFile(wb, "clinic_booking.xlsx");
+        })
+        .catch(() => {
+            alert("匯出失敗，請稍後再試。");
         });
 }
 </script>

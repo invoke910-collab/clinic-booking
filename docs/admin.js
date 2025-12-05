@@ -1,13 +1,14 @@
 // ===============================
-// Supabase 初始化
+// Supabase 初始化（與前台共用同一組）
 // ===============================
 const SUPABASE_URL = "YOUR_SUPABASE_URL";
 const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 後台密碼
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 後台登入密碼
 const ADMIN_PASS = "9100";
-
 
 // ===============================
 // 登入
@@ -23,60 +24,60 @@ function login() {
     }
 }
 
-
 // ===============================
-// 清除過期資料（今天以前）
+// 清除今天以前的資料（保留今天）
 // ===============================
 async function cleanOld() {
     const today = new Date().toISOString().split("T")[0];
-
     await db
         .from("appointments")
         .delete()
         .lt("date", today);
 }
 
-
 // ===============================
-// 讀取資料
+// 載入資料
 // ===============================
 async function loadData() {
     await cleanOld();
 
-    const { data } = await db
+    const { data, error } = await db
         .from("appointments")
         .select("*")
         .order("created_at", { ascending: false });
 
-    renderTable(data);
+    if (error) {
+        alert("讀取資料失敗，請稍後再試");
+        return;
+    }
+
+    renderTable(data || []);
 }
 
-
 // ===============================
-// 渲染表格
+// 表格渲染
 // ===============================
-function renderTable(rows) {
+function renderTable(list) {
     const tbody = document.getElementById("tbody");
     tbody.innerHTML = "";
 
-    rows.forEach(r => {
+    list.forEach(item => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${r.id}</td>
-          <td>${r.name}</td>
-          <td>${r.phone}</td>
-          <td>${r.id_number}</td>
-          <td>${r.birthday}</td>
-          <td>${r.date}</td>
-          <td>${r.time}</td>
-          <td>${r.doctor}</td>
-          <td>${r.created_at}</td>
-          <td><button class="delBtn" onclick="deleteRow(${r.id})">刪除</button></td>
+            <td>${item.id}</td>
+            <td>${item.name}</td>
+            <td>${item.phone}</td>
+            <td>${item.id_number}</td>
+            <td>${item.birthday}</td>
+            <td>${item.date}</td>
+            <td>${item.time}</td>
+            <td>${item.doctor}</td>
+            <td>${item.created_at}</td>
+            <td><button class="delBtn" onclick="deleteRow(${item.id})">刪除</button></td>
         `;
         tbody.appendChild(tr);
     });
 }
-
 
 // ===============================
 // 刪除單筆
@@ -88,14 +89,13 @@ async function deleteRow(id) {
     loadData();
 }
 
-
 // ===============================
 // 匯出 Excel
 // ===============================
-document.getElementById("exportBtn").addEventListener("click", function () {
+document.getElementById("exportBtn").addEventListener("click", () => {
     const table = document.getElementById("dataTable");
     const wb = XLSX.utils.table_to_book(table, { sheet: "預約資料" });
-    XLSX.writeFile(wb, "clinic_booking.xlsx");
+    XLSX.writeFile(wb, "clinic-booking.xlsx");
 });
 
 document.getElementById("refreshBtn").addEventListener("click", loadData);

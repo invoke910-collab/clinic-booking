@@ -1,9 +1,11 @@
-// ===== 1. 填入你的 Supabase URL & anon key =====
 const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
 
-// ===== 2. 建立 Supabase client =====
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+import { createClient } 
+  from "https://esm.sh/@supabase/supabase-js@2";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
 // ===== 3. 載入排班設定（schedule.json） =====
 let scheduleData = null;

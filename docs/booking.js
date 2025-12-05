@@ -1,8 +1,8 @@
 // ===============================
 // Supabase 初始化（請填自己的 URL & anon key）
 // ===============================
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
+const SUPABASE_KEY = "c5e35025-2ef9-4f98-9363-72758c85efdf";
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);

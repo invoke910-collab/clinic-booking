@@ -1,6 +1,6 @@
 // ===== 1. 填入你的 Supabase URL & anon key =====
 const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
-const SUPABASE_KEY = "c5e35025-2ef9-4f98-9363-72758c85efdf";
+const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
 
 // ===== 2. 建立 Supabase client =====
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

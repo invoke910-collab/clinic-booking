@@ -8,54 +8,62 @@
 <style>
     body {
         font-family: "Noto Sans TC", sans-serif;
-        background: #eaf5f1;
+        background: #e6f0ec;
         margin: 0;
+        padding: 0;
     }
+
     .container {
-        max-width: 420px;
-        width: 92%;
+        max-width: 480px;
+        width: 94%;
         margin: 20px auto;
         background: #ffffff;
-        padding: 22px 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 25px 20px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        box-sizing: border-box; /* ⭐ 保證不溢出 */
     }
+
     h2 {
         text-align: center;
         color: #006c5f;
-        margin-bottom: 25px;
-        font-size: 22px;
+        margin-bottom: 22px;
     }
+
     label {
         font-weight: bold;
-        margin-top: 15px;
-        color: #003c36;
+        margin-top: 14px;
         display: block;
+        color: #003c36;
     }
+
     input, select {
         width: 100%;
-        padding: 10px;
+        padding: 12px;
         margin-top: 6px;
         font-size: 15px;
-        border: 1px solid #bccac7;
-        border-radius: 6px;
+        border: 1px solid #b9c7c2;
+        border-radius: 8px;
+        box-sizing: border-box; /* ⭐ 這行最重要，避免超出畫面 */
     }
+
     button {
         width: 100%;
         background: #008063;
         color: #fff;
-        padding: 14px;
-        border-radius: 8px;
-        margin-top: 25px;
-        font-size: 17px;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 28px;
+        font-size: 18px;
         border: none;
         cursor: pointer;
     }
+
     .note {
         font-size: 12px;
         text-align: center;
         color: #b44a4a;
-        margin-top: 10px;
+        margin-top: 14px;
     }
 
     /* Popup */
@@ -67,29 +75,32 @@
         justify-content: center;
         align-items: center;
     }
+
     #popupBox {
         background: #fff;
         width: 86%;
         max-width: 360px;
         padding: 25px;
         border-radius: 12px;
-        line-height: 1.8;
         text-align: left;
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        line-height: 1.8;
     }
+
     #popupBox h3 {
         text-align: center;
         margin-bottom: 12px;
         font-size: 20px;
     }
+
     .popup-btn {
         width: 120px;
         margin: 18px auto 0;
         background: #2d73d2;
         padding: 10px;
         color: #fff;
-        text-align: center;
         border-radius: 8px;
+        text-align: center;
         cursor: pointer;
     }
 </style>
@@ -139,6 +150,11 @@
     </div>
 </div>
 
+<!-- ⭐ Supabase SDK（必須要有，否則按鈕沒反應） -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<!-- booking.js -->
 <script src="booking.js"></script>
+
 </body>
 </html>

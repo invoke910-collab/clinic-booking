@@ -2,7 +2,7 @@
 // Supabase 初始化
 // ===============================
 const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
+const SUPABASE_KEY = "sb_secret_L8MHEUlgBl0QuLDb02G3aA___ugtlsq";
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 

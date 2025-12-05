@@ -5,31 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>順立骨科診所後台管理</title>
 
-<!-- XLSX 套件：匯出 Excel 用 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
     body {
-        margin: 0;
         background: #eef4f2;
+        margin: 0;
         font-family: "Noto Sans TC", sans-serif;
     }
 
-    /* ===== 登入盒子 ===== */
+    /* 登入框 */
     #loginBox {
         width: 90%;
         max-width: 360px;
         margin: 80px auto;
-        background: #fff;
         padding: 25px;
+        background: #fff;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         text-align: center;
-    }
-
-    #loginBox h2 {
-        margin-top: 0;
-        color: #006c5f;
     }
 
     #loginBox input {
@@ -38,24 +32,21 @@
         margin-top: 15px;
         border: 1px solid #ccc;
         border-radius: 8px;
-        font-size: 14px;
-        box-sizing: border-box;
     }
 
     #loginBox button {
         width: 100%;
+        padding: 12px;
         margin-top: 20px;
         background: #008063;
-        padding: 12px;
-        font-size: 15px;
-        color: #fff;
+        color: white;
         border: none;
         border-radius: 8px;
-        cursor: pointer;
     }
 
-    /* ===== 後台內容區 ===== */
-    #adminBox {
+    /* 後台內容 */
+    #adminPanel {
+        display: none;
         width: 96%;
         max-width: 980px;
         margin: 20px auto;
@@ -63,25 +54,15 @@
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        display: none;
-        box-sizing: border-box;
     }
 
-    #adminBox h2 {
-        margin-top: 0;
-        color: #006c5f;
-        font-size: 20px;
-        text-align: center;
-    }
-
-    /* 按鈕列 */
-    .btn-row {
+    .btnRow {
         display: flex;
         gap: 10px;
         margin-bottom: 15px;
     }
 
-    .btn-row button {
+    .btnRow button {
         flex: 1;
         padding: 10px;
         background: #008063;
@@ -89,64 +70,44 @@
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        font-size: 14px;
     }
 
-    /* 表格 */
     table {
         width: 100%;
         border-collapse: collapse;
         font-size: 14px;
-        margin-top: 15px;
     }
-
     th {
         background: #006c5f;
-        color: #fff;
-        padding: 10px 5px;
-        font-weight: 600;
-        white-space: nowrap;
+        color: white;
+        padding: 10px;
         text-align: left;
     }
-
     td {
+        padding: 8px;
         border-bottom: 1px solid #ddd;
-        padding: 8px 4px;
         text-align: left;
-        word-break: break-word;
     }
 
-    /* RWD：手機表格自動換行 */
-    @media (max-width: 600px) {
-        th, td {
-            font-size: 12px;
-            padding: 6px 3px;
-        }
-    }
 </style>
 </head>
 
 <body>
 
-<!-- ===========================
-       ⭐ 1. 後台登入畫面
-=========================== -->
+<!-- ⭐ 登入畫面 -->
 <div id="loginBox">
     <h2>後台登入</h2>
-
-    <input id="adminPassword" type="password" placeholder="請輸入後台密碼">
-    <button onclick="loginAdmin()">登入</button>
+    <input id="pwd" type="password" placeholder="請輸入後台密碼">
+    <button onclick="login()">登入</button>
 </div>
 
-<!-- ===========================
-       ⭐ 2. 後台操作畫面
-=========================== -->
-<div id="adminBox">
+<!-- ⭐ 後台管理畫面 -->
+<div id="adminPanel">
     <h2>預約管理</h2>
 
-    <div class="btn-row">
-        <button onclick="refreshData()">重新整理</button>
-        <button onclick="exportExcel()">匯出 Excel</button>
+    <div class="btnRow">
+        <button id="refreshBtn">重新整理</button>
+        <button id="exportBtn">匯出 Excel</button>
     </div>
 
     <table id="dataTable">
@@ -161,9 +122,10 @@
                 <th>時段</th>
                 <th>醫師</th>
                 <th>建立時間</th>
+                <th>刪除</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tbody"></tbody>
     </table>
 </div>
 

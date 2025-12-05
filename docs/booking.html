@@ -20,6 +20,7 @@
         padding: 22px 20px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-sizing: border-box;
     }
 
     h2 {
@@ -34,6 +35,7 @@
         margin-top: 15px;
         color: #003c36;
         display: block;
+        font-size: 15px;
     }
 
     input, select {
@@ -43,6 +45,13 @@
         font-size: 15px;
         border: 1px solid #bccac7;
         border-radius: 6px;
+        box-sizing: border-box;
+
+        /* 防止外溢關鍵設定 */
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     button {
@@ -127,12 +136,12 @@
 
     <label>預約時段：</label>
     <select id="section">
-        <option value="">請先選擇日期</option>
+        <option value="">選日期</option>
     </select>
 
     <label>醫師：</label>
     <select id="doctor">
-        <option value="">請先選擇時段</option>
+        <option value="">選時段</option>
     </select>
 
     <button onclick="submitBooking()">送出預約</button>

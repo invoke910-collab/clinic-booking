@@ -7,7 +7,7 @@ const ADMIN_PASSWORD = "9100";
 
 // ---- Supabase 設定 ----
 const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
-const SUPABASE_KEY = "在這裡貼上你自己的 sb-publishable key"; // 一定要換成你自己的那串
+const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR"; // 一定要換成你自己的那串
 
 const { createClient } = window.supabase;
 const supa = createClient(SUPABASE_URL, SUPABASE_KEY);

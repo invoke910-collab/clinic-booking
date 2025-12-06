@@ -1,162 +1,171 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>順立骨科診所線上預約</title>
 
 <style>
-    body {
-        font-family: "Noto Sans TC", sans-serif;
-        background: #e6f0ec;
-        margin: 0;
-        padding: 0;
-    }
+  body {
+    font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+    background: #e6f0ec;
+    margin: 0;
+    padding: 0;
+  }
 
-    .container {
-        width: 100%;
-        max-width: 420px;
-        margin: 20px auto;
-        background: #ffffff;
-        padding: 22px 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        box-sizing: border-box;
-    }
+  .container {
+    max-width: 420px;
+    width: 90%;
+    margin: 20px auto;
+    background: #ffffff;
+    padding: 22px 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+  }
 
-    h2 {
-        text-align: center;
-        color: #006c5f;
-        margin-bottom: 22px;
-        font-size: 22px;
-    }
+  h2 {
+    text-align: center;
+    color: #006c5f;
+    margin: 0 0 22px;
+    font-size: 22px;
+  }
 
-    label {
-        font-weight: bold;
-        margin-top: 14px;
-        display: block;
-        color: #003c36;
-    }
+  label {
+    font-weight: bold;
+    margin-top: 14px;
+    display: block;
+    color: #003c36;
+    font-size: 14px;
+  }
 
-    input, select {
-        width: 100%;
-        padding: 12px;
-        margin-top: 6px;
-        font-size: 15px;
-        border: 1px solid #b9c7c2;
-        border-radius: 8px;
-        box-sizing: border-box;
-    }
+  input,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    font-size: 15px;
+    border: 1px solid #b9c7c2;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
 
-    button {
-        width: 100%;
-        background: #008063;
-        color: #fff;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 28px;
-        font-size: 18px;
-        border: none;
-        cursor: pointer;
-    }
+  button {
+    width: 100%;
+    background: #008063;
+    color: #fff;
+    padding: 14px;
+    border-radius: 10px;
+    margin-top: 26px;
+    font-size: 17px;
+    border: none;
+    cursor: pointer;
+  }
 
-    .note {
-        font-size: 12px;
-        text-align: center;
-        color: #b44a4a;
-        margin-top: 14px;
-    }
+  button:active {
+    opacity: 0.9;
+  }
 
-    /* Popup */
-    #popupBg {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.45);
-        display: none;
-        justify-content: center;
-        align-items: center;
-    }
+  .note {
+    font-size: 12px;
+    text-align: center;
+    color: #b44a4a;
+    margin-top: 14px;
+  }
 
-    #popupBox {
-        background: #fff;
-        width: 86%;
-        max-width: 360px;
-        padding: 25px;
-        border-radius: 12px;
-        text-align: left;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        line-height: 1.8;
-        box-sizing: border-box;
-    }
+  /* Popup */
+  #popupBg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
 
-    #popupBox h3 {
-        text-align: center;
-        margin-bottom: 12px;
-        font-size: 20px;
-    }
+  #popupBox {
+    background: #ffffff;
+    width: 86%;
+    max-width: 360px;
+    padding: 22px 20px;
+    border-radius: 16px;
+    text-align: left;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    line-height: 1.8;
+    box-sizing: border-box;
+  }
 
-    .popup-btn {
-        width: 120px;
-        margin: 18px auto 0;
-        background: #2d73d2;
-        padding: 10px;
-        color: #fff;
-        border-radius: 8px;
-        text-align: center;
-        cursor: pointer;
-    }
+  #popupBox h3 {
+    text-align: center;
+    margin: 0 0 10px;
+    font-size: 20px;
+  }
+
+  #popupContent {
+    font-size: 15px;
+  }
+
+  .popup-btn {
+    width: 120px;
+    margin: 18px auto 0;
+    background: #2d73d2;
+    padding: 9px 0;
+    color: #fff;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 15px;
+  }
 </style>
 </head>
 
 <body>
-
-<div class="container">
+  <div class="container">
     <h2>順立骨科診所線上預約</h2>
 
     <label>姓名（必填）：</label>
-    <input id="name">
+    <input id="name" />
 
     <label>電話（必填）：</label>
-    <input id="phone">
+    <input id="phone" />
 
     <label>身分證字號／護照號碼（必填）：</label>
-    <input id="id_number">
+    <input id="id_number" />
 
     <label>出生年月日（必填）：</label>
-    <input type="date" id="birthday">
+    <input type="date" id="birthday" />
 
     <label>預約日期（今日不可預約）：</label>
-    <input type="date" id="date">
+    <input type="date" id="date" />
 
     <label>預約時段：</label>
     <select id="section">
-        <option value="">請先選擇日期</option>
+      <option value="">請先選擇日期</option>
     </select>
 
     <label>醫師：</label>
     <select id="doctor">
-        <option value="">請先選擇時段</option>
+      <option value="">請先選擇時段</option>
     </select>
 
     <button onclick="submitBooking()">送出預約</button>
 
-    <div class="note">所有欄位皆為必填</div>
-</div>
+    <div class="note">所有欄位皆為必填（姓名、電話、證件、生日、日期、時段、醫師）</div>
+  </div>
 
-<!-- Popup -->
-<div id="popupBg">
+  <!-- Popup -->
+  <div id="popupBg">
     <div id="popupBox">
-        <h3>預約成功！</h3>
-        <div id="popupContent"></div>
-        <div class="popup-btn" onclick="closePopup()">確定</div>
+      <h3>預約成功！</h3>
+      <div id="popupContent"></div>
+      <div class="popup-btn" onclick="closePopup()">確定</div>
     </div>
-</div>
+  </div>
 
-<!-- ⭐ Supabase SDK 放在前面 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- ⭐ booking.js（不要加 ./ ）-->
-<script src="booking.js"></script>
-
+  <!-- Supabase UMD（要放在 booking.js 前） -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="booking.js"></script>
 </body>
 </html>

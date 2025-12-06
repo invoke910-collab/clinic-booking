@@ -1,187 +1,186 @@
-// =============================================
-// Supabase 設定（使用 UMD 全域版）
-// =============================================
-const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
-const SUPABASE_KEY = "sb-publishable-3C11H2..................................fIPR";
+// =======================================
+// 順立骨科 booking.js（最終正式版）
+// =======================================
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// =============================================
-// 1. 今日以前不可預約
-// =============================================
+// 今日不可預約（從明天開始）
 const dateInput = document.getElementById("date");
-const today = new Date().toISOString().split("T")[0];
-dateInput.min = today;
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+dateInput.min = tomorrow.toISOString().split("T")[0];
 
-// =============================================
-// 2. 載入班表
-// =============================================
-let SCHEDULE = null;
+// 取 DOM
+const sectionSelect = document.getElementById("section");
+const doctorSelect = document.getElementById("doctor");
 
-async function loadSchedule() {
-    const res = await fetch("schedule.json");
-    SCHEDULE = await res.json();
-}
+// ================================
+// 時段中文
+// ================================
+const timeLabel = {
+  morning: "早診（08:00–12:00）",
+  afternoon: "午診（14:30–18:00）",
+  night: "晚診（18:00–20:00）"
+};
 
-// =============================================
-// 3. 日期選擇 → 更新時段與醫師
-// =============================================
-document.getElementById("date").addEventListener("change", async function () {
-    if (!SCHEDULE) await loadSchedule();
+// ================================
+// 平日班表（你確認 A 版）
+// ================================
+const weekdaySchedule = {
+  1: { // Monday
+    morning: ["吳立偉院長", "郭芷毓醫師"],
+    afternoon: ["林峻豪副院長"],
+    night: ["林峻豪副院長"]
+  },
+  2: { // Tuesday
+    morning: ["林峻豪副院長"],
+    afternoon: ["郭芷毓醫師"],
+    night: ["吳立偉院長", "郭芷毓醫師"]
+  },
+  3: { // Wednesday
+    morning: ["吳立偉院長", "郭芷毓醫師"],
+    afternoon: ["黃俞華副院長"],
+    night: ["黃俞華副院長"]
+  },
+  4: { // Thursday
+    morning: ["吳立偉院長"],
+    afternoon: ["林峻豪副院長"],
+    night: ["林峻豪副院長"]
+  },
+  5: { // Friday
+    morning: ["林峻豪副院長"],
+    afternoon: ["郭芷毓醫師"],
+    night: ["郭芷毓醫師"]
+  }
+};
 
-    const chosenDate = this.value;
-    const weekday = new Date(chosenDate).getDay();
+// ================================
+// 週六輪值（你指定的輪值）
+// ================================
+const saturdayDoctor = {
+  "2025-12-06": "劉俊良醫師",
+  "2025-12-13": "林峻豪副院長",
+  "2025-12-20": "劉俊良醫師",
+  "2025-12-27": "林峻豪副院長"
+};
 
-    const sectionSelect = document.getElementById("section");
-    const doctorSelect = document.getElementById("doctor");
+// ================================
+// 日期改變 → 更新時段
+// ================================
+dateInput.addEventListener("change", () => {
+  const date = dateInput.value;
+  const d = new Date(date);
+  const weekday = d.getDay();
 
-    sectionSelect.innerHTML = `<option value="">請選擇時段</option>`;
-    doctorSelect.innerHTML = `<option value="">請先選擇時段</option>`;
+  sectionSelect.innerHTML = `<option value="">請選擇時段</option>`;
+  doctorSelect.innerHTML = `<option value="">請先選擇時段</option>`;
+  doctorSelect.disabled = true;
 
-    // 星期日休診
-    if (weekday === 0) {
-        alert("星期日休診，無法預約");
-        return;
-    }
+  // 週日休診
+  if (weekday === 0) {
+    sectionSelect.innerHTML = `<option value="">休診</option>`;
+    return;
+  }
 
-    // -------------------------
-    // 週六（輪值）
-    // -------------------------
-    if (weekday === 6) {
-        const sat = SCHEDULE.saturday;
+  // 週六 → 早診 + 午診
+  if (weekday === 6) {
+    sectionSelect.innerHTML += `
+      <option value="morning">早診（08:00–12:00）</option>
+      <option value="afternoon">午診（14:30–18:00）</option>
+    `;
+    return;
+  }
 
-        const match = sat.cycle.find(x => x.date === chosenDate);
-        if (!match) {
-            alert("此週六沒有門診。");
-            return;
-        }
-
-        // 時段
-        for (let key of Object.keys(sat.sections)) {
-            const opt = document.createElement("option");
-            opt.value = key;
-            opt.textContent = sat.sections[key];
-            sectionSelect.appendChild(opt);
-        }
-
-        // 醫師
-        sectionSelect.onchange = () => {
-            doctorSelect.innerHTML = "";
-            const opt = document.createElement("option");
-            opt.value = match.doctor;
-            opt.textContent = match.doctor;
-            doctorSelect.appendChild(opt);
-        };
-
-        return;
-    }
-
-    // -------------------------
-    // 平日班表
-    // -------------------------
-    const day = weekday; //1~5
-    const daySchedule = SCHEDULE.weekday[day];
-
-    // 時段
-    const naming = {
-        morning: "早診（08:00–12:00）",
-        afternoon: "午診（14:30–18:00）",
-        night: "晚診（18:00–20:00）"
-    };
-
-    Object.keys(daySchedule).forEach(sec => {
-        const opt = document.createElement("option");
-        opt.value = sec;
-        opt.textContent = naming[sec];
-        sectionSelect.appendChild(opt);
-    });
-
-    // 醫師
-    sectionSelect.onchange = () => {
-        doctorSelect.innerHTML = `<option value="">請選擇醫師</option>`;
-        const sec = sectionSelect.value;
-
-        daySchedule[sec].forEach(doc => {
-            const opt = document.createElement("option");
-            opt.value = doc;
-            opt.textContent = doc;
-            doctorSelect.appendChild(opt);
-        });
-    };
+  // 平日 → 早、午、晚
+  sectionSelect.innerHTML += `
+    <option value="morning">早診（08:00–12:00）</option>
+    <option value="afternoon">午診（14:30–18:00）</option>
+    <option value="night">晚診（18:00–20:00）</option>
+  `;
 });
 
-// =============================================
-// 4. 送出預約
-// =============================================
-window.submitBooking = async function () {
-    const name = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const id_number = document.getElementById("id_number").value.trim();
-    const birthday = document.getElementById("birthday").value;
-    const date = document.getElementById("date").value;
-    const sec = document.getElementById("section").value;
-    const doctor = document.getElementById("doctor").value;
+// ================================
+// 選時段 → 更新醫師
+// ================================
+sectionSelect.addEventListener("change", () => {
+  const date = dateInput.value;
+  const d = new Date(date);
+  const weekday = d.getDay();
+  const sec = sectionSelect.value;
 
-    if (!name || !phone || !id_number || !birthday || !date || !sec || !doctor) {
-        alert("所有欄位都是必填！");
-        return;
+  doctorSelect.innerHTML = `<option value="">請選擇醫師</option>`;
+  doctorSelect.disabled = false;
+
+  // 週日休診
+  if (weekday === 0) {
+    doctorSelect.innerHTML = `<option value="">休診</option>`;
+    return;
+  }
+
+  // 週六
+  if (weekday === 6) {
+    const dr = saturdayDoctor[date];
+    if (dr) {
+      doctorSelect.innerHTML += `<option value="${dr}">${dr}</option>`;
     }
+    return;
+  }
 
-    const displayTime = {
-        morning: "早診（08:00–12:00）",
-        afternoon: "午診（14:30–18:00）",
-        night: "晚診（18:00–20:00）"
-    }[sec];
+  // 平日
+  if (weekdaySchedule[weekday] && weekdaySchedule[weekday][sec]) {
+    weekdaySchedule[weekday][sec].forEach(doc => {
+      doctorSelect.innerHTML += `<option value="${doc}">${doc}</option>`;
+    });
+  }
+});
 
-    // 檢查重複預約
-    const { data: exist, error: checkErr } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("name", name)
-        .eq("phone", phone)
-        .eq("date", date)
-        .eq("time", displayTime)
-        .eq("doctor", doctor);
+// ================================
+// 送出預約
+// ================================
+function submitBooking() {
+  let data = {
+    name: document.getElementById("name").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    id_number: document.getElementById("id_number").value.trim(),
+    birthday: document.getElementById("birthday").value,
+    date: document.getElementById("date").value,
+    time: document.getElementById("section").value,
+    doctor: document.getElementById("doctor").value
+  };
 
-    if (checkErr) {
-        alert("檢查預約時發生錯誤，請稍後重試");
+  if (!data.name || !data.phone || !data.id_number || !data.birthday ||
+      !data.date || !data.time || !data.doctor) {
+    alert("請完整填寫所有欄位！");
+    return;
+  }
+
+  fetch("https://clinic-booking-yb4u.onrender.com/booking", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+    .then(res => res.json())
+    .then(result => {
+      if (result.error) {
+        alert(result.error);
         return;
-    }
+      }
+      showPopup(data);
+    });
+}
 
-    if (exist.length > 0) {
-        alert("您已預約此日期與時段（相同醫師），不能重複預約！");
-        return;
-    }
+// ================================
+// Popup 顯示
+// ================================
+function showPopup(data) {
+  document.getElementById("popupContent").innerHTML = `
+      姓名：${data.name}<br>
+      日期：${data.date}<br>
+      時段：${timeLabel[data.time]}<br>
+      醫師：${data.doctor}
+  `;
+  document.getElementById("popupBg").style.display = "flex";
+}
 
-    // 寫入
-    const { error: insertErr } = await supabase
-        .from("appointments")
-        .insert([
-            {
-                name,
-                phone,
-                id_number,
-                birthday,
-                date,
-                time: displayTime,
-                doctor
-            }
-        ]);
-
-    if (insertErr) {
-        alert("寫入資料時發生錯誤，請稍後再試");
-        return;
-    }
-
-    // 顯示成功 popup
-    document.getElementById("popupContent").innerHTML = `
-        姓名：${name}<br>
-        日期：${date}<br>
-        時段：${displayTime}<br>
-        醫師：${doctor}
-    `;
-    document.getElementById("popupBg").style.display = "flex";
-
-    // 表單清空
-    document.querySelector("form")?.reset();
-};
+function closePopup() {
+  document.getElementById("popupBg").style.display = "none";
+  location.reload();
+}

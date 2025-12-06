@@ -1,124 +1,130 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>順立骨科診所線上預約</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>順立骨科診所線上預約</title>
 
-<style>
-  body {
-    font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI",
-      sans-serif;
-    background: #e6f0ec;
-    margin: 0;
-    padding: 0;
-  }
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background: #e6f0ec;
+      margin: 0;
+      padding: 0;
+    }
 
-  .container {
-    max-width: 420px;
-    width: 90%;
-    margin: 20px auto;
-    background: #ffffff;
-    padding: 22px 18px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-  }
+    .container {
+      max-width: 420px;
+      width: 90%;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 22px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+    }
 
-  h2 {
-    text-align: center;
-    color: #006c5f;
-    margin: 0 0 22px;
-    font-size: 22px;
-  }
+    h2 {
+      text-align: center;
+      color: #006c5f;
+      margin-bottom: 22px;
+      font-size: 22px;
+    }
 
-  label {
-    font-weight: bold;
-    margin-top: 14px;
-    display: block;
-    color: #003c36;
-    font-size: 14px;
-  }
+    label {
+      font-weight: bold;
+      margin-top: 14px;
+      display: block;
+      color: #003c36;
+    }
 
-  input,
-  select {
-    width: 100%;
-    padding: 10px 12px;
-    margin-top: 6px;
-    font-size: 15px;
-    border: 1px solid #b9c7c2;
-    border-radius: 8px;
-    box-sizing: border-box;
-  }
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      font-size: 15px;
+      border: 1px solid #b9c7c2;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
 
-  button {
-    width: 100%;
-    background: #008063;
-    color: #fff;
-    padding: 14px;
-    border-radius: 10px;
-    margin-top: 26px;
-    font-size: 17px;
-    border: none;
-    cursor: pointer;
-  }
+    button {
+      width: 100%;
+      background: #008063;
+      color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 28px;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+    }
 
-  button:active {
-    opacity: 0.9;
-  }
+    button:hover {
+      background: #006b52;
+    }
 
-  .note {
-    font-size: 12px;
-    text-align: center;
-    color: #b44a4a;
-    margin-top: 14px;
-  }
+    .note {
+      font-size: 12px;
+      text-align: center;
+      color: #b44a4a;
+      margin-top: 14px;
+    }
 
-  /* Popup */
-  #popupBg {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
+    /* Popup 背景 */
+    #popupBg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
 
-  #popupBox {
-    background: #ffffff;
-    width: 86%;
-    max-width: 360px;
-    padding: 22px 20px;
-    border-radius: 16px;
-    text-align: left;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    line-height: 1.8;
-    box-sizing: border-box;
-  }
+    /* Popup 內容框 */
+    #popupBox {
+      background: #ffffff;
+      width: 86%;
+      max-width: 360px;
+      padding: 22px 22px 18px;
+      border-radius: 14px;
+      text-align: left;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      box-sizing: border-box;
+      line-height: 1.8;
+    }
 
-  #popupBox h3 {
-    text-align: center;
-    margin: 0 0 10px;
-    font-size: 20px;
-  }
+    #popupBox h3 {
+      text-align: center;
+      margin: 0 0 10px;
+      font-size: 20px;
+      color: #222;
+    }
 
-  #popupContent {
-    font-size: 15px;
-  }
+    #popupContent {
+      font-size: 15px;
+      color: #333;
+      margin-top: 4px;
+    }
 
-  .popup-btn {
-    width: 120px;
-    margin: 18px auto 0;
-    background: #2d73d2;
-    padding: 9px 0;
-    color: #fff;
-    border-radius: 8px;
-    text-align: center;
-    cursor: pointer;
-    font-size: 15px;
-  }
-</style>
+    .popup-btn {
+      width: 120px;
+      margin: 18px auto 4px;
+      background: #2d73d2;
+      padding: 9px 0;
+      color: #fff;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .popup-btn:hover {
+      background: #235bb0;
+    }
+  </style>
 </head>
 
 <body>
@@ -152,20 +158,23 @@
 
     <button onclick="submitBooking()">送出預約</button>
 
-    <div class="note">所有欄位皆為必填（姓名、電話、證件、生日、日期、時段、醫師）</div>
+    <div class="note">
+      所有欄位都是必填（姓名、電話、證件、生日、日期、時段、醫師）
+    </div>
   </div>
 
-  <!-- Popup -->
+  <!-- 漂亮 Popup -->
   <div id="popupBg">
     <div id="popupBox">
-      <h3>預約成功！</h3>
+      <h3 id="popupTitle">訊息</h3>
       <div id="popupContent"></div>
       <div class="popup-btn" onclick="closePopup()">確定</div>
     </div>
   </div>
 
-  <!-- Supabase UMD（要放在 booking.js 前） -->
+  <!-- Supabase UMD CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 前台邏輯 -->
   <script src="booking.js"></script>
 </body>
 </html>

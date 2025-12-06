@@ -14,15 +14,15 @@
     }
 
     .container {
-    max-width: 420px;
-    width: 90%;
-    margin: 20px auto;
-    background: #ffffff;
-    padding: 22px 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-}
+        width: 100%;
+        max-width: 420px;
+        margin: 20px auto;
+        background: #ffffff;
+        padding: 22px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-sizing: border-box;
+    }
 
     h2 {
         text-align: center;
@@ -45,7 +45,7 @@
         font-size: 15px;
         border: 1px solid #b9c7c2;
         border-radius: 8px;
-        box-sizing: border-box; /* ⭐ 避免超框 */
+        box-sizing: border-box;
     }
 
     button {
@@ -152,9 +152,7 @@
     </div>
 </div>
 
-<!-- ⭐ Supabase SDK 一定要在 booking.js 前面 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="booking.js"></script>
+<script src="./booking.js"></script>
 
 </body>
 </html>

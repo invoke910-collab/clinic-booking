@@ -1,144 +1,229 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>順立骨科診所後台管理</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>順立骨科診所 - 線上預約後台</title>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<style>
+  <style>
     body {
-        background: #eef3f2;
-        margin: 0;
-        font-family: "Noto Sans TC", sans-serif;
+      font-family: "Noto Sans TC", sans-serif;
+      background: #f3f5f7;
+      margin: 0;
+      padding: 0;
     }
 
-    #loginBox {
-        width: 90%;
-        max-width: 360px;
-        margin: 100px auto;
-        padding: 25px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        text-align: center;
+    .wrapper {
+      max-width: 960px;
+      width: 94%;
+      margin: 20px auto 40px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 20px 18px 24px;
+      box-sizing: border-box;
     }
 
-    #loginBox input {
-        width: 100%;
-        padding: 12px;
-        margin-top: 15px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      margin: 4px 0 16px;
+      color: #204060;
     }
 
-    #loginBox button {
-        width: 100%;
-        padding: 12px;
-        margin-top: 20px;
-        background: #008063;
-        color: white;
-        border: none;
-        border-radius: 8px;
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-bottom: 10px;
     }
 
-    #adminPanel {
-        display: none;
-        width: 96%;
-        max-width: 980px;
-        margin: 20px auto;
-        background: #fff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        box-sizing: border-box;
+    .btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
     }
 
-    .btnRow {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
+    .btn-refresh {
+      background: #00a884;
+      color: white;
     }
 
-    .btnRow button {
-        flex: 1;
-        min-width: 120px;
-        padding: 10px;
-        background: #008063;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
+    .btn-export {
+      background: #2d73d2;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #d9534f;
+      color: white;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
     }
 
     table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-    }
-    th {
-        background: #006c5f;
-        color: white;
-        padding: 8px;
-        text-align: left;
-    }
-    td {
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-        text-align: left;
-        word-break: break-all;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 760px;
     }
 
-    .delBtn {
-        background: #cc3333;
-        color: #fff;
-        border: none;
-        padding: 6px 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
+    thead {
+      background: #eaf2ff;
     }
-</style>
+
+    th,
+    td {
+      border: 1px solid #dde2ea;
+      padding: 6px 8px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      color: #314156;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafbfc;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    /* ---- 登入遮罩 ---- */
+    #loginMask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    #loginBox {
+      background: #ffffff;
+      width: 86%;
+      max-width: 340px;
+      padding: 22px 20px 18px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    #loginBox h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: #203040;
+    }
+
+    #loginBox p {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    #adminPassword {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #c5ced8;
+      font-size: 14px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    #loginBtn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #00a884;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    #loginError {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #c0392b;
+      min-height: 18px;
+    }
+
+    @media (max-width: 600px) {
+      table {
+        font-size: 12px;
+      }
+      .wrapper {
+        padding: 16px 12px 20px;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <!-- 登入遮罩 -->
+  <div id="loginMask">
+    <div id="loginBox">
+      <h2>後台登入</h2>
+      <p>請輸入管理密碼</p>
+      <input
+        type="password"
+        id="adminPassword"
+        placeholder="請輸入密碼"
+        autocomplete="off"
+      />
+      <button id="loginBtn">登入</button>
+      <div id="loginError"></div>
+    </div>
+  </div>
 
-<div id="loginBox">
-    <h2>後台登入</h2>
-    <input id="pwd" type="password" placeholder="請輸入後台密碼">
-    <button onclick="login()">登入</button>
-</div>
+  <div class="wrapper" id="adminMain" style="display: none">
+    <h1>順立骨科診所 - 線上預約後台</h1>
 
-<div id="adminPanel">
-    <h2>預約管理</h2>
-    <div class="btnRow">
-        <button id="refreshBtn">重新整理</button>
-        <button id="exportBtn">匯出 Excel</button>
+    <div class="toolbar">
+      <button class="btn btn-refresh" id="btnRefresh">重新整理</button>
+      <button class="btn btn-export" id="btnExport">匯出 Excel</button>
     </div>
 
-    <table id="dataTable">
+    <div class="table-container">
+      <table>
         <thead>
-            <tr>
-                <th>ID</th>
-                <th>姓名</th>
-                <th>電話</th>
-                <th>證件</th>
-                <th>生日</th>
-                <th>日期</th>
-                <th>時段</th>
-                <th>醫師</th>
-                <th>建立時間</th>
-                <th>操作</th>
-            </tr>
+          <tr>
+            <th class="text-center">ID</th>
+            <th>姓名</th>
+            <th>電話</th>
+            <th>證件號碼</th>
+            <th>生日</th>
+            <th>日期</th>
+            <th>時段</th>
+            <th>醫師</th>
+            <th>建立時間</th>
+          </tr>
         </thead>
-        <tbody id="tbody"></tbody>
-    </table>
-</div>
+        <tbody id="dataBody">
+          <!-- JS 產生 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="admin.js"></script>
-
+  <!-- Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- XLSX 匯出 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- 後台邏輯 -->
+  <script src="admin.js"></script>
 </body>
 </html>

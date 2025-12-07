@@ -4,7 +4,7 @@
 
 // ---------- Supabase 設定 ----------
 const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
-const SUPABASE_KEY = "sb-publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
+const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
 
 const { createClient } = window.supabase;
 const supa = createClient(SUPABASE_URL, SUPABASE_KEY);

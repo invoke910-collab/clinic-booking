@@ -244,7 +244,7 @@ async function submitBooking() {
     // ---------- 前端查詢：是否重複預約 ----------
     const { data: exist, error: checkErr } = await supa
       .from("appointments")
-      .select("*")
+      .select("id")
       .eq("name", name)
       .eq("phone", phone)
       .eq("date", date)

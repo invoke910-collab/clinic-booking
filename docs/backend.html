@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>預約管理後台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .toolbar {
+      max-width: 960px;
+      margin: 0 auto 8px auto;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .toolbar button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #188A8A;
+      color: #fff;
+      font-size: 14px;
+    }
+    table {
+      max-width: 960px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 100%;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      font-size: 13px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+    tr.new-row {
+      background: #fff7e0;
+    }
+    .badge-new {
+      display: inline-block;
+      font-size: 11px;
+      background: #ff9800;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 12px;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>預約管理後台</h1>
+
+  <div class="toolbar">
+    <button id="refreshBtn">重新整理</button>
+    <button id="exportBtn">匯出 Excel (CSV)</button>
+  </div>
+
+  <table>
+    <thead>
+    <tr>
+      <th>建立時間</th>
+      <th>日期</th>
+      <th>時段</th>
+      <th>醫師</th>
+      <th>姓名</th>
+      <th>手機</th>
+      <th>證件號</th>
+      <th>生日</th>
+    </tr>
+    </thead>
+    <tbody id="bookingTbody">
+    <tr><td colspan="8">載入中...</td></tr>
+    </tbody>
+  </table>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
+    const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let latestData = [];
+
+    async function loadAppointments() {
+      const tbody = document.getElementById("bookingTbody");
+      tbody.innerHTML = `<tr><td colspan="8">載入中...</td></tr>`;
+
+      const { data, error } = await supa
+        .from("appointments")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="8">讀取資料發生錯誤</td></tr>`;
+        return;
+      }
+
+      latestData = data || [];
+      renderTable(latestData);
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById("bookingTbody");
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8">目前沒有預約資料</td></tr>`;
+        return;
+      }
+
+      const now = new Date();
+      tbody.innerHTML = "";
+
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+
+        // 判斷是否為「新」：24 小時內
+        const createdAt = r.created_at ? new Date(r.created_at) : null;
+        let isNew = false;
+        if (createdAt) {
+          const diffHours = (now - createdAt) / 36e5;
+          if (diffHours <= 24) isNew = true;
+        }
+        if (isNew) tr.classList.add("new-row");
+
+        const tdCreated = document.createElement("td");
+        tdCreated.textContent = createdAt ? createdAt.toLocaleString() : "";
+        if (isNew) {
+          const badge = document.createElement("span");
+          badge.className = "badge-new";
+          badge.textContent = "新";
+          tdCreated.appendChild(badge);
+        }
+
+        const tdDate = document.createElement("td");
+        tdDate.textContent = r.date || "";
+
+        const tdTime = document.createElement("td");
+        tdTime.textContent = r.time || "";
+
+        const tdDoctor = document.createElement("td");
+        tdDoctor.textContent = r.doctor || "";
+
+        const tdName = document.createElement("td");
+        tdName.textContent = r.name || "";
+
+        const tdPhone = document.createElement("td");
+        tdPhone.textContent = r.phone || "";
+
+        const tdId = document.createElement("td");
+        tdId.textContent = r.id_number || "";
+
+        const tdBirth = document.createElement("td");
+        tdBirth.textContent = r.birthday || "";
+
+        tr.appendChild(tdCreated);
+        tr.appendChild(tdDate);
+        tr.appendChild(tdTime);
+        tr.appendChild(tdDoctor);
+        tr.appendChild(tdName);
+        tr.appendChild(tdPhone);
+        tr.appendChild(tdId);
+        tr.appendChild(tdBirth);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 匯出為 CSV（Excel 可直接開啟）
+    function exportToCsv() {
+      if (!latestData || latestData.length === 0) {
+        alert("目前沒有資料可匯出");
+        return;
+      }
+
+      const header = [
+        "建立時間",
+        "日期",
+        "時段",
+        "醫師",
+        "姓名",
+        "手機",
+        "證件號",
+        "生日"
+      ];
+
+      const rows = latestData.map(r => [
+        r.created_at || "",
+        r.date || "",
+        r.time || "",
+        r.doctor || "",
+        r.name || "",
+        r.phone || "",
+        r.id_number || "",
+        r.birthday || ""
+      ]);
+
+      const all = [header, ...rows];
+
+      const csv = all
+        .map(row =>
+          row
+            .map(col => {
+              const s = (col ?? "").toString().replace(/"/g, '""');
+              return `"${s}"`;
+            })
+            .join(",")
+        )
+        .join("\r\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const todayStr = new Date().toISOString().slice(0,10);
+      a.download = `appointments_${todayStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", loadAppointments);
+    document.getElementById("exportBtn").addEventListener("click", exportToCsv);
+
+    // 載入頁面就自動讀取一次
+    loadAppointments();
+  </script>
+</body>
+</html>

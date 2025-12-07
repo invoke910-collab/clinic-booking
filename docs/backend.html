@@ -63,6 +63,17 @@
       margin-left: 4px;
     }
   </style>
+
+  <!-- 🔐 後台密碼保護 -->
+  <script>
+    (function () {
+      var pwd = prompt("請輸入後台密碼：");
+      if (pwd !== "9100") {
+        alert("密碼錯誤，將返回預約頁");
+        window.location.href = "booking.html";
+      }
+    })();
+  </script>
 </head>
 <body>
   <h1>預約管理後台</h1>
@@ -92,9 +103,9 @@
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
-    const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
+    const SUPABASE_KEY = "sb-publishable_3C11H2gMsruJ11llR82XNw_zvl2fIPR";
+    const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let latestData = [];
 
@@ -130,7 +141,6 @@
       rows.forEach(r => {
         const tr = document.createElement("tr");
 
-        // 判斷是否為「新」：24 小時內
         const createdAt = r.created_at ? new Date(r.created_at) : null;
         let isNew = false;
         if (createdAt) {
@@ -182,7 +192,6 @@
       });
     }
 
-    // 匯出為 CSV（Excel 可直接開啟）
     function exportToCsv() {
       if (!latestData || latestData.length === 0) {
         alert("目前沒有資料可匯出");
@@ -239,7 +248,6 @@
     document.getElementById("refreshBtn").addEventListener("click", loadAppointments);
     document.getElementById("exportBtn").addEventListener("click", exportToCsv);
 
-    // 載入頁面就自動讀取一次
     loadAppointments();
   </script>
 </body>

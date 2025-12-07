@@ -2,8 +2,12 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>預約管理後台</title>
+  <title>順立骨科預約管理後台</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- SheetJS：產生 .xlsx 專用 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -29,6 +33,7 @@
       background: #188A8A;
       color: #fff;
       font-size: 14px;
+      cursor: pointer;
     }
     table {
       max-width: 960px;
@@ -41,11 +46,10 @@
       border: 1px solid #ddd;
       padding: 6px 8px;
       font-size: 13px;
-      text-align: left;
       white-space: nowrap;
     }
     th {
-      background: #f0f0f0;
+      background: #e8e8e8;
     }
     tr:nth-child(even) {
       background: #fafafa;
@@ -64,44 +68,48 @@
     }
   </style>
 
-  <!-- 🔐 後台密碼保護 -->
+  <!-- 密碼保護 -->
   <script>
     (function () {
       var pwd = prompt("請輸入後台密碼：");
       if (pwd !== "9100") {
-        alert("密碼錯誤，將返回預約頁");
+        alert("密碼錯誤！");
         window.location.href = "booking.html";
       }
     })();
   </script>
 </head>
+
 <body>
-  <h1>預約管理後台</h1>
+  <h1>順立骨科預約管理後台</h1>
 
   <div class="toolbar">
     <button id="refreshBtn">重新整理</button>
-    <button id="exportBtn">匯出 Excel (CSV)</button>
+    <button id="exportCsvBtn">匯出 CSV（UTF-8）</button>
+    <button id="exportXlsxBtn">匯出 Excel（.xlsx）</button>
   </div>
 
   <table>
     <thead>
-    <tr>
-      <th>建立時間</th>
-      <th>日期</th>
-      <th>時段</th>
-      <th>醫師</th>
-      <th>姓名</th>
-      <th>手機</th>
-      <th>證件號</th>
-      <th>生日</th>
-    </tr>
+      <tr>
+        <th>建立時間</th>
+        <th>日期</th>
+        <th>時段</th>
+        <th>醫師</th>
+        <th>姓名</th>
+        <th>手機</th>
+        <th>證件號</th>
+        <th>生日</th>
+      </tr>
     </thead>
     <tbody id="bookingTbody">
-    <tr><td colspan="8">載入中...</td></tr>
+      <tr><td colspan="8">載入中...</td></tr>
     </tbody>
   </table>
 
+  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <script>
     const SUPABASE_URL = "https://fjqsrhnwssazcqvjdqqt.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqcXNyaG53c3NhemNxdmpkcXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MTUzMTIsImV4cCI6MjA4MDQ5MTMxMn0.o--0wO3G9MYe6HTJbI4D1xYOFKOZ1R_4-PNOW7FQ9g0";
@@ -109,6 +117,7 @@
 
     let latestData = [];
 
+    // 讀取資料
     async function loadAppointments() {
       const tbody = document.getElementById("bookingTbody");
       tbody.innerHTML = `<tr><td colspan="8">載入中...</td></tr>`;
@@ -120,7 +129,7 @@
 
       if (error) {
         console.error(error);
-        tbody.innerHTML = `<tr><td colspan="8">讀取資料發生錯誤</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8">資料讀取失敗</td></tr>`;
         return;
       }
 
@@ -128,125 +137,125 @@
       renderTable(latestData);
     }
 
+    // 顯示表格
     function renderTable(rows) {
       const tbody = document.getElementById("bookingTbody");
-      if (!rows || rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8">目前沒有預約資料</td></tr>`;
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="8">目前無資料</td></tr>`;
         return;
       }
 
-      const now = new Date();
       tbody.innerHTML = "";
+      const now = new Date();
 
       rows.forEach(r => {
         const tr = document.createElement("tr");
 
-        const createdAt = r.created_at ? new Date(r.created_at) : null;
-        let isNew = false;
-        if (createdAt) {
-          const diffHours = (now - createdAt) / 36e5;
-          if (diffHours <= 24) isNew = true;
-        }
+        const created = r.created_at ? new Date(r.created_at) : null;
+        const isNew = created && (now - created) / 36e5 <= 24;
+
         if (isNew) tr.classList.add("new-row");
 
-        const tdCreated = document.createElement("td");
-        tdCreated.textContent = createdAt ? createdAt.toLocaleString() : "";
-        if (isNew) {
-          const badge = document.createElement("span");
-          badge.className = "badge-new";
-          badge.textContent = "新";
-          tdCreated.appendChild(badge);
+        function td(value) {
+          const el = document.createElement("td");
+          el.textContent = value ?? "";
+          return el;
         }
 
-        const tdDate = document.createElement("td");
-        tdDate.textContent = r.date || "";
+        const tdCreated = td(created ? created.toLocaleString() : "");
+        if (isNew) {
+          const b = document.createElement("span");
+          b.className = "badge-new";
+          b.textContent = "新";
+          tdCreated.appendChild(b);
+        }
 
-        const tdTime = document.createElement("td");
-        tdTime.textContent = r.time || "";
-
-        const tdDoctor = document.createElement("td");
-        tdDoctor.textContent = r.doctor || "";
-
-        const tdName = document.createElement("td");
-        tdName.textContent = r.name || "";
-
-        const tdPhone = document.createElement("td");
-        tdPhone.textContent = r.phone || "";
-
-        const tdId = document.createElement("td");
-        tdId.textContent = r.id_number || "";
-
-        const tdBirth = document.createElement("td");
-        tdBirth.textContent = r.birthday || "";
-
-        tr.appendChild(tdCreated);
-        tr.appendChild(tdDate);
-        tr.appendChild(tdTime);
-        tr.appendChild(tdDoctor);
-        tr.appendChild(tdName);
-        tr.appendChild(tdPhone);
-        tr.appendChild(tdId);
-        tr.appendChild(tdBirth);
+        tr.append(
+          tdCreated,
+          td(r.date),
+          td(r.time),
+          td(r.doctor),
+          td(r.name),
+          td(r.phone),
+          td(r.id_number),
+          td(r.birthday)
+        );
 
         tbody.appendChild(tr);
       });
     }
 
-    function exportToCsv() {
-      if (!latestData || latestData.length === 0) {
-        alert("目前沒有資料可匯出");
-        return;
-      }
+    // 匯出 CSV（UTF-8 BOM）
+    function exportCSV() {
+      if (!latestData.length) return alert("沒有資料可匯出");
 
-      const header = [
-        "建立時間",
-        "日期",
-        "時段",
-        "醫師",
-        "姓名",
-        "手機",
-        "證件號",
-        "生日"
-      ];
-
+      const header = ["建立時間","日期","時段","醫師","姓名","手機","證件號","生日"];
       const rows = latestData.map(r => [
-        r.created_at || "",
-        r.date || "",
-        r.time || "",
-        r.doctor || "",
-        r.name || "",
-        r.phone || "",
-        r.id_number || "",
-        r.birthday || ""
+        r.created_at ?? "",
+        r.date ?? "",
+        r.time ?? "",
+        r.doctor ?? "",
+        r.name ?? "",
+        r.phone ?? "",
+        r.id_number ?? "",
+        r.birthday ?? ""
       ]);
 
-      const all = [header, ...rows];
-
-      const csv = all
-        .map(row =>
-          row
-            .map(col => {
-              const s = (col ?? "").toString().replace(/"/g, '""');
-              return `"${s}"`;
-            })
-            .join(",")
-        )
+      const csv = [header, ...rows]
+        .map(row => row.map(v => `"${(v ?? "").toString().replace(/"/g,'""')}"`).join(","))
         .join("\r\n");
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const BOM = "\uFEFF"; // ★ 防亂碼
+      const blob = new Blob([BOM + csv], { type:"text/csv;charset=utf-8;" });
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const todayStr = new Date().toISOString().slice(0,10);
-      a.download = `appointments_${todayStr}.csv`;
-      document.body.appendChild(a);
+      a.download = "appointments.csv";
       a.click();
-      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
-    document.getElementById("refreshBtn").addEventListener("click", loadAppointments);
-    document.getElementById("exportBtn").addEventListener("click", exportToCsv);
+    // 匯出 Excel (.xlsx)
+    function exportXLSX() {
+      if (!latestData.length) return alert("沒有資料可匯出");
+
+      const sheetData = [
+        ["建立時間","日期","時段","醫師","姓名","手機","證件號","生日"],
+        ...latestData.map(r => [
+          r.created_at,
+          r.date,
+          r.time,
+          r.doctor,
+          r.name,
+          r.phone,
+          r.id_number,
+          r.birthday
+        ])
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+      // 凍結第一列
+      ws["!freeze"] = { rows: 1 };
+
+      // 手機欄格式轉文字避免科學記號
+      const phoneCol = 5; // 第6欄
+      for (let i = 2; i <= sheetData.length; i++) {
+        const cell = XLSX.utils.encode_cell({ r:i-1, c:phoneCol });
+        if (ws[cell]) ws[cell].z = "@";
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "預約名單");
+
+      XLSX.writeFile(wb, "appointments.xlsx");
+    }
+
+    document.getElementById("refreshBtn").onclick = loadAppointments;
+    document.getElementById("exportCsvBtn").onclick = exportCSV;
+    document.getElementById("exportXlsxBtn").onclick = exportXLSX;
 
     loadAppointments();
   </script>
